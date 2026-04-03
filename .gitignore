@@ -1,0 +1,19 @@
+# Node
+node_modules/
+
+# Env files (IMPORTANT)
+.env
+
+# Logs
+*.log
+
+# Build files
+dist/
+build/
+
+# Python
+venv/
+__pycache__/
+
+# OS files
+.DS_Store
