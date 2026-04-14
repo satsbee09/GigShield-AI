@@ -175,6 +175,14 @@ const css = `
     justify-content: center;
     cursor: pointer;
     transition: opacity 0.2s;
+    overflow: hidden;
+  }
+
+  .app-top-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .app-top-avatar:hover {
@@ -276,6 +284,7 @@ export default function App() {
   ];
   const activeTabLabel = tabs.find((item) => item.id === tab)?.label || 'Home';
   const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
+  const workerImage = worker?.profileImage || '';
   const showNotifDot = notifications.length > 0 && !notifOpen;
 
   useEffect(() => {
@@ -429,7 +438,11 @@ export default function App() {
             )}
           </div>
           <button className="app-top-avatar" onClick={() => setTab('profile')}>
-            {workerInitial}
+            {workerImage ? (
+              <img src={workerImage} alt="Profile" className="app-top-avatar-img" />
+            ) : (
+              workerInitial
+            )}
           </button>
         </div>
       </div>

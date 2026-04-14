@@ -67,6 +67,15 @@ const css = `
     justify-content: center;
     font-size: 16px;
     font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .pf-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .pf-name {
@@ -189,6 +198,63 @@ const css = `
     font-size: 12px;
   }
 
+  .pf-photo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .pf-photo-btn {
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.03);
+    color: #9FB2C6;
+    border-radius: 10px;
+    padding: 8px 11px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  .pf-photo-btn:hover {
+    border-color: rgba(255,255,255,0.22);
+    color: #fff;
+  }
+
+  .pf-photo-remove {
+    border: 1px solid rgba(232,85,85,0.35);
+    background: transparent;
+    color: #E85555;
+    border-radius: 10px;
+    padding: 8px 11px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  .pf-photo-remove:hover {
+    border-color: rgba(232,85,85,0.55);
+  }
+
+  .pf-hidden-file {
+    display: none;
+  }
+
+  .pf-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 82px;
+    transform: translateX(-50%);
+    z-index: 60;
+    border-radius: 10px;
+    border: 1px solid rgba(0,229,160,0.25);
+    background: rgba(0,229,160,0.08);
+    color: #00E5A0;
+    font-size: 12px;
+    padding: 9px 13px;
+    white-space: nowrap;
+  }
+
   .pf-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -255,11 +321,13 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   const zoneName = worker?.zone?.replace(/_/g, ' ') || 'Not set';
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
+  const [showToast, setShowToast] = useState(false);
   const [form, setForm] = useState({
     name: worker?.name || '',
     phone: worker?.phone || '',
     platform: worker?.platform || PLATFORMS[0],
     zone: worker?.zone || ZONES[0].value,
+    profileImage: worker?.profileImage || '',
   });
 
   useEffect(() => {
@@ -268,8 +336,37 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       phone: worker?.phone || '',
       platform: worker?.platform || PLATFORMS[0],
       zone: worker?.zone || ZONES[0].value,
+      profileImage: worker?.profileImage || '',
     });
   }, [worker]);
+
+  useEffect(() => {
+    if (!showToast) return;
+    const timer = setTimeout(() => setShowToast(false), 1800);
+    return () => clearTimeout(timer);
+  }, [showToast]);
+
+  function handleProfilePhotoChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose a valid image file.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Image should be less than 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((prev) => ({ ...prev, profileImage: typeof reader.result === 'string' ? reader.result : '' }));
+      setError('');
+    };
+    reader.readAsDataURL(file);
+  }
 
   function handleSaveProfile() {
     const name = form.name.trim();
@@ -294,10 +391,12 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       zone: form.zone,
       zoneLat: selectedZone?.lat ?? worker?.zoneLat,
       zoneLon: selectedZone?.lon ?? worker?.zoneLon,
+      profileImage: form.profileImage,
     });
 
     setError('');
     setIsEditing(false);
+    setShowToast(true);
   }
 
   return (
@@ -308,7 +407,13 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
         <div className="pf-inner">
           <div className="pf-card">
             <div className="pf-head">
-              <div className="pf-avatar">{worker?.name?.[0]?.toUpperCase() || 'U'}</div>
+              <div className="pf-avatar">
+                {worker?.profileImage ? (
+                  <img src={worker.profileImage} alt="Profile" className="pf-avatar-img" />
+                ) : (
+                  worker?.name?.[0]?.toUpperCase() || 'U'
+                )}
+              </div>
               <div>
                 <div className="pf-name">{worker?.name || 'Worker'}</div>
                 <div className="pf-sub">+91 {worker?.phone} · {worker?.platform}</div>
@@ -346,6 +451,34 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
               </>
             ) : (
               <>
+                <div className="pf-photo-row">
+                  <div className="pf-avatar">
+                    {form.profileImage ? (
+                      <img src={form.profileImage} alt="Profile preview" className="pf-avatar-img" />
+                    ) : (
+                      form.name?.[0]?.toUpperCase() || 'U'
+                    )}
+                  </div>
+                  <label className="pf-photo-btn" htmlFor="pf-photo-input">
+                    Upload photo
+                  </label>
+                  {form.profileImage && (
+                    <button
+                      className="pf-photo-remove"
+                      onClick={() => setForm((prev) => ({ ...prev, profileImage: '' }))}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <input
+                    id="pf-photo-input"
+                    className="pf-hidden-file"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePhotoChange}
+                  />
+                </div>
+
                 <div className="pf-form-row">
                   <div className="pf-label">Full name</div>
                   <input
@@ -418,6 +551,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
           </div>
         </div>
       </div>
+      {showToast && <div className="pf-toast">Profile saved successfully</div>}
     </>
   );
 }
