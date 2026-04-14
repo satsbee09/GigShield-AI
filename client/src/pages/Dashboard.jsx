@@ -284,42 +284,6 @@ const css = `
     padding: 0;
   }
 
-  .db-quick-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  .db-quick-card {
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    background: rgba(255,255,255,0.02);
-    padding: 11px 10px;
-    color: #fff;
-    cursor: pointer;
-    text-align: left;
-    transition: border-color 0.2s, transform 0.15s;
-  }
-  .db-quick-card:hover {
-    border-color: rgba(0,229,160,0.24);
-    transform: translateY(-1px);
-  }
-  .db-quick-icon {
-    font-size: 16px;
-    margin-bottom: 8px;
-    display: inline-block;
-  }
-  .db-quick-title {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: -0.2px;
-    margin-bottom: 2px;
-  }
-  .db-quick-sub {
-    color: #3A5570;
-    font-size: 10px;
-  }
-
   .db-claims-list {
     background: rgba(255,255,255,0.02);
     border: 1px solid rgba(255,255,255,0.05);
@@ -489,7 +453,7 @@ const css = `
   .db-animate-4 { animation: fadeUp 0.3s 0.24s ease both; }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenProfile, showHeader = true }) {
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, showHeader = true }) {
   const [policy,  setPolicy]  = useState(null);
   const [claims,  setClaims]  = useState([]);
   const [wScore,  setWScore]  = useState(null);
@@ -499,7 +463,7 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenPro
 
   useEffect(() => {
     if (notice?.type !== 'disruption') return;
-    const t = setTimeout(() => setNotice(null), 1200);
+    const t = setTimeout(() => setNotice(null), 1500);
     return () => clearTimeout(t);
   }, [notice]);
 
@@ -665,30 +629,8 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenPro
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="db-animate-4">
-            <div className="db-section-title">Quick actions</div>
-            <div className="db-quick-grid">
-              <button className="db-quick-card" onClick={onOpenClaims}>
-                <span className="db-quick-icon">📄</span>
-                <div className="db-quick-title">Claims</div>
-                <div className="db-quick-sub">Track payouts</div>
-              </button>
-              <button className="db-quick-card" onClick={onOpenProfile}>
-                <span className="db-quick-icon">👤</span>
-                <div className="db-quick-title">Profile</div>
-                <div className="db-quick-sub">Account details</div>
-              </button>
-              <button className="db-quick-card" onClick={onBuyPolicy}>
-                <span className="db-quick-icon">🛡️</span>
-                <div className="db-quick-title">Policy</div>
-                <div className="db-quick-sub">Manage coverage</div>
-              </button>
-            </div>
-          </div>
-
           {/* Recent Claims */}
-          <div className="db-animate-4">
+          <div className="db-animate-4" style={{ marginTop: 8 }}>
             <div className="db-section-head">
               <div className="db-section-title" style={{ marginBottom: 0 }}>Recent claim activity</div>
               <button className="db-section-link" onClick={onOpenClaims}>View all</button>

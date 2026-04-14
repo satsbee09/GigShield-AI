@@ -314,7 +314,7 @@ export default function Policy({ worker, onSuccess, onBack }) {
     if (notice?.type !== 'success' || !notice?.worker) return;
     const t = setTimeout(() => {
       onSuccess(notice.worker);
-    }, 1200);
+    }, 1500);
     return () => clearTimeout(t);
   }, [notice, onSuccess]);
 

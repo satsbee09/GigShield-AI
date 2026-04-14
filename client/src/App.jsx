@@ -435,7 +435,6 @@ export default function App() {
             worker={worker}
             onBuyPolicy={() => setScreen('policy')}
             onOpenClaims={() => setTab('claims')}
-            onOpenProfile={() => setTab('profile')}
             showHeader={false}
           />
         )}
