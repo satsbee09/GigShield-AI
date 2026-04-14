@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const TIER_COLOR = { low: '#00E5A0', medium: '#FFB347', high: '#FF5C5C' };
 const TIER_BG    = { low: 'rgba(0,229,160,0.06)', medium: 'rgba(255,179,71,0.06)', high: 'rgba(255,92,92,0.06)' };
@@ -310,6 +310,14 @@ export default function Policy({ worker, onSuccess, onBack }) {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState(null);
 
+  useEffect(() => {
+    if (notice?.type !== 'success' || !notice?.worker) return;
+    const t = setTimeout(() => {
+      onSuccess(notice.worker);
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [notice, onSuccess]);
+
   const tier     = worker?.premiumTier || 'high';
   const color    = TIER_COLOR[tier];
   const coverage = COVERAGE[tier] || 600;
@@ -389,6 +397,7 @@ export default function Policy({ worker, onSuccess, onBack }) {
                     className="pl-modal-btn"
                     onClick={() => {
                       if (notice.type === 'success' && notice.worker) {
+                        setNotice(null);
                         onSuccess(notice.worker);
                         return;
                       }

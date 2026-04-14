@@ -387,6 +387,12 @@ export default function Dashboard({ worker, onBuyPolicy }) {
   const [notice, setNotice] = useState(null);
 
   useEffect(() => {
+    if (notice?.type !== 'disruption') return;
+    const t = setTimeout(() => setNotice(null), 1200);
+    return () => clearTimeout(t);
+  }, [notice]);
+
+  useEffect(() => {
     async function load() {
       try {
         const [pr, cr] = await Promise.all([
