@@ -145,6 +145,22 @@ const css = `
     background: rgba(0,229,160,0.07);
     color: #00E5A0;
   }
+  .cl-filter-meta {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 7px;
+  }
+  .cl-active-badge {
+    border-radius: 999px;
+    border: 1px solid rgba(0,229,160,0.32);
+    background: rgba(0,229,160,0.08);
+    color: #00E5A0;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    padding: 3px 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
   .cl-results-note {
     color: #4E677D;
     font-size: 11px;
@@ -337,6 +353,7 @@ export default function Claims({ worker }) {
   const filteredPaid = filteredClaims.filter(c => c.status === 'paid');
   const filteredRejected = filteredClaims.filter(c => c.status === 'rejected');
   const hasActiveControls = searchTerm.trim().length > 0 || activeFilter !== 'all';
+  const activeFiltersCount = (searchTerm.trim().length > 0 ? 1 : 0) + (activeFilter !== 'all' ? 1 : 0);
 
   return (
     <>
@@ -388,6 +405,11 @@ export default function Claims({ worker }) {
                 </button>
               ))}
             </div>
+            {hasActiveControls && (
+              <div className="cl-filter-meta">
+                <div className="cl-active-badge">{activeFiltersCount} active</div>
+              </div>
+            )}
             {hasActiveControls && (
               <div className="cl-controls-foot">
                 <button
