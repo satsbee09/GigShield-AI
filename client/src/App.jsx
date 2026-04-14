@@ -263,6 +263,11 @@ export default function App() {
     setScreen('onboarding');
   }
 
+  function onUpdateProfile(updatedWorker) {
+    localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
+    setWorker(updatedWorker);
+  }
+
   // Main app (Dashboard + Tabs)
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: '🏠' },
@@ -446,6 +451,7 @@ export default function App() {
             worker={worker}
             onLogout={onLogout}
             onOpenPolicy={() => setScreen('policy')}
+            onUpdateProfile={onUpdateProfile}
           />
         )}
       </div>
