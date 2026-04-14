@@ -268,6 +268,117 @@ const css = `
     margin-bottom: 8px;
   }
 
+  .db-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .db-section-link {
+    border: none;
+    background: transparent;
+    color: #00E5A0;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .db-quick-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .db-quick-card {
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.02);
+    padding: 11px 10px;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .db-quick-card:hover {
+    border-color: rgba(0,229,160,0.24);
+    transform: translateY(-1px);
+  }
+  .db-quick-icon {
+    font-size: 16px;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  .db-quick-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    margin-bottom: 2px;
+  }
+  .db-quick-sub {
+    color: #3A5570;
+    font-size: 10px;
+  }
+
+  .db-claims-list {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+  }
+  .db-claims-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .db-claims-item:last-child { border-bottom: none; }
+  .db-claims-main { min-width: 0; }
+  .db-claims-type {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: capitalize;
+    margin-bottom: 2px;
+  }
+  .db-claims-meta {
+    color: #3A5570;
+    font-size: 11px;
+  }
+  .db-claims-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .db-claims-amt {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .db-claims-status {
+    border: 1px solid;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  .db-empty-claims {
+    border: 1px dashed rgba(255,255,255,0.14);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    color: #6E859B;
+    font-size: 12px;
+    text-align: center;
+  }
+
   .db-loading {
     background: #070E1A;
     min-height: 100vh;
@@ -378,7 +489,7 @@ const css = `
   .db-animate-4 { animation: fadeUp 0.3s 0.24s ease both; }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy }) {
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenProfile }) {
   const [policy,  setPolicy]  = useState(null);
   const [claims,  setClaims]  = useState([]);
   const [wScore,  setWScore]  = useState(null);
@@ -456,8 +567,10 @@ export default function Dashboard({ worker, onBuyPolicy }) {
   }
 
   const paid  = claims.filter(c => c.status === 'paid');
+  const pending = claims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
   const total = paid.reduce((s, c) => s + (c.payoutAmount || 0), 0);
   const color = wScore !== null ? wColor(wScore) : '#3A5570';
+  const recentClaims = claims.slice(0, 3);
 
   return (
     <>
@@ -550,30 +663,84 @@ export default function Dashboard({ worker, onBuyPolicy }) {
             </div>
           </div>
 
-          {/* Latest Claim */}
-          {claims[0] && (
-            <div className="db-claim-card db-animate-4">
-              <div className="db-claim-header">Latest claim</div>
-              <div className="db-claim-row">
-                <div>
-                  <div className="db-claim-type">
-                    {claims[0].triggerType?.replace(/_/g, ' ')}
-                  </div>
-                  <div className="db-claim-date">
-                    {new Date(claims[0].createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
-                </div>
-                <div
-                  className="db-claim-amount"
-                  style={{ color: claims[0].status === 'paid' ? '#00E5A0' : '#FFB347' }}
-                >
-                  {claims[0].status === 'paid'
-                    ? `+₹${claims[0].payoutAmount}`
-                    : 'Processing'}
-                </div>
+          {/* Quick Actions */}
+          <div className="db-animate-4">
+            <div className="db-section-title">Quick actions</div>
+            <div className="db-quick-grid">
+              <button className="db-quick-card" onClick={onOpenClaims}>
+                <span className="db-quick-icon">📄</span>
+                <div className="db-quick-title">Claims</div>
+                <div className="db-quick-sub">Track payouts</div>
+              </button>
+              <button className="db-quick-card" onClick={onOpenProfile}>
+                <span className="db-quick-icon">👤</span>
+                <div className="db-quick-title">Profile</div>
+                <div className="db-quick-sub">Account details</div>
+              </button>
+              <button className="db-quick-card" onClick={onBuyPolicy}>
+                <span className="db-quick-icon">🛡️</span>
+                <div className="db-quick-title">Policy</div>
+                <div className="db-quick-sub">Manage coverage</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Recent Claims */}
+          <div className="db-animate-4">
+            <div className="db-section-head">
+              <div className="db-section-title" style={{ marginBottom: 0 }}>Recent claim activity</div>
+              <button className="db-section-link" onClick={onOpenClaims}>View all</button>
+            </div>
+
+            {recentClaims.length === 0 ? (
+              <div className="db-empty-claims">
+                No claims yet. You’re covered—claims will appear automatically during disruptions.
+              </div>
+            ) : (
+              <div className="db-claims-list">
+                {recentClaims.map((claim, index) => {
+                  const isPaid = claim.status === 'paid';
+                  const isRejected = claim.status === 'rejected';
+                  const statusColor = isPaid ? '#00E5A0' : isRejected ? '#FF5C5C' : '#FFB347';
+                  return (
+                    <div className="db-claims-item" key={claim._id || index}>
+                      <div className="db-claims-main">
+                        <div className="db-claims-type">{claim.triggerType?.replace(/_/g, ' ') || 'Disruption event'}</div>
+                        <div className="db-claims-meta">
+                          {new Date(claim.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
+                      <div className="db-claims-right">
+                        <div className="db-claims-amt" style={{ color: statusColor }}>
+                          {isPaid ? `+₹${claim.payoutAmount || 0}` : 'Pending'}
+                        </div>
+                        <div
+                          className="db-claims-status"
+                          style={{ color: statusColor, borderColor: `${statusColor}66`, background: `${statusColor}12` }}
+                        >
+                          {claim.status || 'processing'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Coverage Snapshot */}
+          <div className="db-claim-card db-animate-4">
+            <div className="db-claim-header">Coverage snapshot</div>
+            <div className="db-claim-row">
+              <div>
+                <div className="db-claim-type">Claims in processing</div>
+                <div className="db-claim-date">Auto-review based on live disruption data</div>
+              </div>
+              <div className="db-claim-amount" style={{ color: pending.length ? '#FFB347' : '#00E5A0' }}>
+                {pending.length}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Simulate Disruption */}
           <button className="db-sim-btn" onClick={handleSimulate} disabled={simming}>
