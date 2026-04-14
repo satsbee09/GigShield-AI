@@ -160,30 +160,13 @@ const css = `
     padding: 3px 8px;
     text-transform: uppercase;
     font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
   }
   .cl-results-note {
     color: #4E677D;
     font-size: 11px;
     margin-bottom: 10px;
-  }
-  .cl-controls-foot {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
-  }
-  .cl-clear-btn {
-    border: 1px solid rgba(255,255,255,0.12);
-    background: transparent;
-    color: #8EA5B8;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    border-radius: 8px;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  .cl-clear-btn:hover {
-    color: #fff;
-    border-color: rgba(255,255,255,0.2);
   }
 
   /* ── Claim Card ── */
@@ -407,19 +390,14 @@ export default function Claims({ worker }) {
             </div>
             {hasActiveControls && (
               <div className="cl-filter-meta">
-                <div className="cl-active-badge">{activeFiltersCount} active</div>
-              </div>
-            )}
-            {hasActiveControls && (
-              <div className="cl-controls-foot">
                 <button
-                  className="cl-clear-btn"
+                  className="cl-active-badge"
                   onClick={() => {
                     setSearchTerm('');
                     setActiveFilter('all');
                   }}
                 >
-                  Clear filters
+                  {activeFiltersCount} active
                 </button>
               </div>
             )}

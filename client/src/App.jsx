@@ -21,6 +21,84 @@ const css = `
     overflow-y: auto;
   }
 
+  .app-topbar {
+    height: 60px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: #0D1E30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    flex-shrink: 0;
+  }
+
+  .app-topbar-left {
+    min-width: 0;
+  }
+
+  .app-topbar-brand {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    margin-bottom: 1px;
+  }
+
+  .app-topbar-brand span {
+    color: #00C896;
+  }
+
+  .app-topbar-sub {
+    color: #6D879F;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .app-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .app-top-btn {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+    color: #9AB0C3;
+    border-radius: 10px;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .app-top-btn:hover {
+    border-color: rgba(255,255,255,0.18);
+    color: #fff;
+  }
+
+  .app-top-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,200,150,0.25);
+    background: rgba(0,200,150,0.1);
+    color: #00C896;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .app-top-avatar:hover {
+    opacity: 0.9;
+  }
+
   .app-nav {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -121,10 +199,25 @@ export default function App() {
     { id: 'claims', label: 'Claims', icon: '📄' },
     { id: 'profile', label: 'Profile', icon: '👤' }
   ];
+  const activeTabLabel = tabs.find((item) => item.id === tab)?.label || 'Home';
+  const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
 
   return (
     <div className="app-shell">
       <style>{css}</style>
+
+      <div className="app-topbar">
+        <div className="app-topbar-left">
+          <div className="app-topbar-brand">GigShield <span>AI</span></div>
+          <div className="app-topbar-sub">{activeTabLabel}</div>
+        </div>
+        <div className="app-topbar-actions">
+          <button className="app-top-btn" onClick={() => setScreen('policy')}>Policy</button>
+          <button className="app-top-avatar" onClick={() => setTab('profile')}>
+            {workerInitial}
+          </button>
+        </div>
+      </div>
 
       <div className="app-content">
         {tab === 'dashboard' && (
@@ -133,6 +226,7 @@ export default function App() {
             onBuyPolicy={() => setScreen('policy')}
             onOpenClaims={() => setTab('claims')}
             onOpenProfile={() => setTab('profile')}
+            showHeader={false}
           />
         )}
 

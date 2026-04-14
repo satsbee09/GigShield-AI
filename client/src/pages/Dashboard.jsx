@@ -489,7 +489,7 @@ const css = `
   .db-animate-4 { animation: fadeUp 0.3s 0.24s ease both; }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenProfile }) {
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenProfile, showHeader = true }) {
   const [policy,  setPolicy]  = useState(null);
   const [claims,  setClaims]  = useState([]);
   const [wScore,  setWScore]  = useState(null);
@@ -579,13 +579,15 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, onOpenPro
         <div className="db-bg-orb" />
 
         {/* Header */}
-        <div className="db-header db-animate">
-          <div>
-            <div className="db-greeting">Good day,</div>
-            <div className="db-name">{worker.name}</div>
+        {showHeader && (
+          <div className="db-header db-animate">
+            <div>
+              <div className="db-greeting">Good day,</div>
+              <div className="db-name">{worker.name}</div>
+            </div>
+            <div className="db-avatar">{worker.name?.[0]?.toUpperCase()}</div>
           </div>
-          <div className="db-avatar">{worker.name?.[0]?.toUpperCase()}</div>
-        </div>
+        )}
 
         <div className="db-scroll">
 
