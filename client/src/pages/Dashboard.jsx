@@ -280,6 +280,94 @@ const css = `
     letter-spacing: 0.5px;
   }
 
+  .db-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 8, 16, 0.74);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 30;
+  }
+  .db-modal {
+    width: min(420px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(180deg, rgba(8,18,32,0.98) 0%, rgba(7,14,26,0.98) 100%);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.42);
+    overflow: hidden;
+  }
+  .db-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .db-modal-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .db-modal-badge {
+    font-size: 10px;
+    color: #FFB347;
+    border: 1px solid rgba(255,179,71,0.28);
+    background: rgba(255,179,71,0.08);
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .db-modal-body { padding: 14px 16px 16px; }
+  .db-modal-text {
+    color: #9FB2C6;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .db-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .db-modal-metric {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+  }
+  .db-modal-metric-k {
+    color: #6C849B;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .db-modal-metric-v {
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+  }
+  .db-modal-actions { display: flex; justify-content: flex-end; }
+  .db-modal-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 16px;
+    background: linear-gradient(135deg, #00E5A0, #00B87A);
+    color: #06101C;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+  }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -296,6 +384,7 @@ export default function Dashboard({ worker, onBuyPolicy }) {
   const [wScore,  setWScore]  = useState(null);
   const [loading, setLoading] = useState(true);
   const [simming, setSimming] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -324,16 +413,29 @@ export default function Dashboard({ worker, onBuyPolicy }) {
   async function handleSimulate() {
     setSimming(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/workability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rainfall_mm: 120, temperature: 42, aqi: 450, traffic_index: 0.9 })
+      const res = await fetch('http://127.0.0.1:8000/workability/simulate?rainfall_mm=120&temp_c=42&aqi=450', {
+        method: 'POST'
       });
+      if (!res.ok) throw new Error('simulate_failed');
       const data = await res.json();
-      setWScore(data.workabilityScore ?? 20);
-      alert(`⚡ Disruption detected!\n\nWorkability: ${data.workabilityScore}/100\nPayout: ${data.payoutPercent}%`);
+      const score = data.workabilityScore ?? 20;
+      const payout = data.payoutPercent ?? 0;
+      setWScore(score);
+      setNotice({
+        type: 'disruption',
+        title: 'Disruption detected',
+        message: 'Severe conditions were simulated. Claim processing can be triggered automatically when this state is live.',
+        score,
+        payout
+      });
     } catch {
-      alert('Could not reach AI engine — make sure FastAPI is running on port 8000.');
+      setNotice({
+        type: 'error',
+        title: 'AI engine unavailable',
+        message: 'Could not reach FastAPI on port 8000. Please ensure the AI engine is running.',
+        score: null,
+        payout: null
+      });
     }
     setSimming(false);
   }
@@ -481,6 +583,37 @@ export default function Dashboard({ worker, onBuyPolicy }) {
           </div>
 
         </div>
+
+        {notice && (
+          <div className="db-modal-backdrop" onClick={() => setNotice(null)}>
+            <div className="db-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="db-modal-head">
+                <div className="db-modal-title">{notice.title}</div>
+                <div className="db-modal-badge">{notice.type === 'error' ? 'Error' : 'Alert'}</div>
+              </div>
+              <div className="db-modal-body">
+                <div className="db-modal-text">{notice.message}</div>
+                {notice.type === 'disruption' && (
+                  <div className="db-modal-grid">
+                    <div className="db-modal-metric">
+                      <div className="db-modal-metric-k">Workability</div>
+                      <div className="db-modal-metric-v">{notice.score}/100</div>
+                    </div>
+                    <div className="db-modal-metric">
+                      <div className="db-modal-metric-k">Payout</div>
+                      <div className="db-modal-metric-v">{notice.payout}%</div>
+                    </div>
+                  </div>
+                )}
+                <div className="db-modal-actions">
+                  <button className="db-modal-btn" onClick={() => setNotice(null)}>
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
