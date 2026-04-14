@@ -150,6 +150,25 @@ const css = `
     font-size: 11px;
     margin-bottom: 10px;
   }
+  .cl-controls-foot {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+  .cl-clear-btn {
+    border: 1px solid rgba(255,255,255,0.12);
+    background: transparent;
+    color: #8EA5B8;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .cl-clear-btn:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.2);
+  }
 
   /* ── Claim Card ── */
   .cl-claim-card {
@@ -317,6 +336,7 @@ export default function Claims({ worker }) {
   const filteredPending = filteredClaims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
   const filteredPaid = filteredClaims.filter(c => c.status === 'paid');
   const filteredRejected = filteredClaims.filter(c => c.status === 'rejected');
+  const hasActiveControls = searchTerm.trim().length > 0 || activeFilter !== 'all';
 
   return (
     <>
@@ -368,6 +388,19 @@ export default function Claims({ worker }) {
                 </button>
               ))}
             </div>
+            {hasActiveControls && (
+              <div className="cl-controls-foot">
+                <button
+                  className="cl-clear-btn"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setActiveFilter('all');
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Empty state */}
