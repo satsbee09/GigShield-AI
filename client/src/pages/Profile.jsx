@@ -324,6 +324,105 @@ const css = `
     border-color: rgba(255,107,107,0.35);
     color: #ff7b7b;
   }
+
+  .pf-help-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 8, 16, 0.74);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 90;
+  }
+
+  .pf-help-modal {
+    width: min(420px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, rgba(11,22,38,0.98) 0%, rgba(7,15,27,0.98) 100%);
+    box-shadow: 0 20px 48px rgba(0,0,0,0.44);
+    overflow: hidden;
+  }
+
+  .pf-help-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .pf-help-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+
+  .pf-help-close {
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.04);
+    color: #b0bfd0;
+    border-radius: 10px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  .pf-help-body {
+    padding: 14px 16px 16px;
+  }
+
+  .pf-help-text {
+    color: #9db0c4;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .pf-help-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .pf-help-item {
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    padding: 10px 11px;
+    color: #d4e0ee;
+    font-size: 12px;
+  }
+
+  .pf-help-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .pf-help-btn {
+    border: 1px solid rgba(79,140,255,0.28);
+    background: rgba(79,140,255,0.1);
+    color: #b9d5ff;
+    border-radius: 10px;
+    padding: 9px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  .pf-help-btn.secondary {
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.03);
+    color: #b0bfd0;
+  }
 `;
 
 export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfile }) {
@@ -331,6 +430,8 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('Profile saved successfully');
+  const [helpOpen, setHelpOpen] = useState(false);
   const [form, setForm] = useState({
     name: worker?.name || '',
     phone: worker?.phone || '',
@@ -405,6 +506,16 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
     setError('');
     setIsEditing(false);
+    setToastMessage('Profile saved successfully');
+    setShowToast(true);
+  }
+
+  function handleCopySupportEmail() {
+    const supportEmail = 'support@gigshield.ai';
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(supportEmail).catch(() => {});
+    }
+    setToastMessage('Support email copied');
     setShowToast(true);
   }
 
@@ -554,13 +665,37 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
               {isEditing ? 'Editing profile...' : 'Set up profile'}
             </button>
             <button className="pf-btn pf-btn-green" onClick={onOpenPolicy}>Manage policy</button>
-            <button className="pf-btn">Help & support</button>
+            <button className="pf-btn" onClick={() => setHelpOpen(true)}>Help & support</button>
             <button className="pf-btn">About GigShield AI</button>
             <button className="pf-btn pf-btn-danger" onClick={onLogout}>Sign out</button>
           </div>
         </div>
       </div>
-      {showToast && <div className="pf-toast">Profile saved successfully</div>}
+      {helpOpen && (
+        <div className="pf-help-backdrop" onClick={() => setHelpOpen(false)}>
+          <div className="pf-help-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pf-help-head">
+              <div className="pf-help-title">Help & Support</div>
+              <button className="pf-help-close" onClick={() => setHelpOpen(false)}>Close</button>
+            </div>
+            <div className="pf-help-body">
+              <p className="pf-help-text">
+                Quick checks before raising support: keep policy active, ensure location access, and allow auto-refresh for claims.
+              </p>
+              <ul className="pf-help-list">
+                <li className="pf-help-item">Claims are generated automatically when disruption thresholds are crossed.</li>
+                <li className="pf-help-item">Policy status refreshes every minute on the dashboard.</li>
+                <li className="pf-help-item">If payouts are delayed, verify server and AI engine are both running.</li>
+              </ul>
+              <div className="pf-help-actions">
+                <button className="pf-help-btn" onClick={handleCopySupportEmail}>Copy support email</button>
+                <button className="pf-help-btn secondary" onClick={() => setHelpOpen(false)}>Done</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {showToast && <div className="pf-toast">{toastMessage}</div>}
     </>
   );
 }

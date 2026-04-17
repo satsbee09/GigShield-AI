@@ -236,6 +236,36 @@ const css = `
   .db-stat-sub { font-size: 10px; color: #8ea3bc; }
   .db-stat-sub.green { color: #66f0c9; }
 
+  .db-reco-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .db-reco-head {
+    color: #8ea3bc;
+    font-size: 10px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .db-reco-list {
+    display: grid;
+    gap: 8px;
+  }
+  .db-reco-item {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 11px;
+    background: rgba(255,255,255,0.03);
+    padding: 10px 11px;
+    color: #d2e2f3;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
   /* ── Claim Card ── */
   .db-claim-card {
     background: rgba(255,255,255,0.04);
@@ -553,6 +583,17 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, showHeade
   const total = paid.reduce((s, c) => s + (c.payoutAmount || 0), 0);
   const color = wScore !== null ? wColor(wScore) : '#3A5570';
   const recentClaims = claims.slice(0, 3);
+  const recommendations = [
+    !policy
+      ? `Activate this week’s policy to keep earnings protected in ${worker.zone?.replace(/_/g, ' ') || 'your zone'}.`
+      : `Coverage is active with ${policy.daysLeft ?? 0} day(s) left—renew before expiry to avoid protection gaps.`,
+    wScore !== null && wScore < 60
+      ? 'Workability is low right now. Prioritize safer routes and watch for trigger alerts.'
+      : 'Workability is stable. Keep checking live score before peak hours.',
+    pending.length > 0
+      ? `${pending.length} claim(s) are under verification—payout updates will appear automatically.`
+      : 'No pending claims currently. You are fully up to date.',
+  ].slice(0, 2);
 
   return (
     <>
@@ -644,6 +685,15 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, showHeade
               <div className="db-stat-label">Claims paid</div>
               <div className="db-stat-value">{paid.length}</div>
               <div className="db-stat-sub green">auto-approved</div>
+            </div>
+          </div>
+
+          <div className="db-reco-card db-animate-3">
+            <div className="db-reco-head">Smart recommendations</div>
+            <div className="db-reco-list">
+              {recommendations.map((item) => (
+                <div key={item} className="db-reco-item">{item}</div>
+              ))}
             </div>
           </div>
 

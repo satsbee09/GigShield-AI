@@ -108,6 +108,37 @@ const css = `
   .cl-controls {
     margin-bottom: 14px;
   }
+
+  .cl-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+
+  .cl-export-btn {
+    border: 1px solid rgba(79,140,255,0.34);
+    background: rgba(79,140,255,0.1);
+    color: #9ec5ff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .cl-export-btn:hover:not(:disabled) {
+    border-color: rgba(79,140,255,0.5);
+    background: rgba(79,140,255,0.16);
+    color: #d6e8ff;
+  }
+
+  .cl-export-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
   .cl-search {
     width: 100%;
     padding: 11px 12px;
@@ -346,6 +377,38 @@ export default function Claims({ worker }) {
   const hasActiveControls = searchTerm.trim().length > 0 || activeFilter !== 'all';
   const activeFiltersCount = (searchTerm.trim().length > 0 ? 1 : 0) + (activeFilter !== 'all' ? 1 : 0);
 
+  function handleExportCsv() {
+    if (filteredClaims.length === 0) return;
+
+    const rows = filteredClaims.map((claim) => ({
+      id: claim._id || '',
+      trigger: (claim.triggerType || 'disruption').replace(/_/g, ' '),
+      status: claim.status || 'processing',
+      payoutAmount: claim.payoutAmount || 0,
+      payoutPercent: claim.payoutPercent ?? '',
+      createdAt: claim.createdAt || '',
+    }));
+
+    const headers = ['id', 'trigger', 'status', 'payoutAmount', 'payoutPercent', 'createdAt'];
+    const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csvLines = [headers.join(',')];
+
+    rows.forEach((row) => {
+      csvLines.push(headers.map((header) => escapeCsv(row[header])).join(','));
+    });
+
+    const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const dateTag = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `gigshield-claims-${dateTag}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <>
       <style>{css}</style>
@@ -379,6 +442,15 @@ export default function Claims({ worker }) {
 
           {/* Controls */}
           <div className="cl-controls cl-animate-2">
+            <div className="cl-toolbar">
+              <button
+                className="cl-export-btn"
+                onClick={handleExportCsv}
+                disabled={filteredClaims.length === 0}
+              >
+                Export filtered CSV
+              </button>
+            </div>
             <input
               className="cl-search"
               placeholder="Search by disruption type"

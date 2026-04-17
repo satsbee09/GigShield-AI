@@ -162,12 +162,33 @@ const css = `
   }
 
   .app-notif-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 10px 12px;
     border-bottom: 1px solid rgba(255,255,255,0.07);
     color: #fff;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.2px;
+  }
+
+  .app-notif-clear {
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.03);
+    color: #bcd0e3;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .app-notif-clear:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.06);
   }
 
   .app-notif-list {
@@ -181,6 +202,16 @@ const css = `
     color: #afc0d2;
     font-size: 12px;
     line-height: 1.45;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .app-notif-item.unread {
+    background: rgba(25,215,165,0.05);
+    color: #d5e9fb;
+  }
+
+  .app-notif-item.read {
+    color: #94a9bc;
   }
 
   .app-notif-item:last-child {
@@ -282,6 +313,7 @@ export default function App() {
   const [worker, setWorker] = useState(null);
   const [tab, setTab] = useState('dashboard');
   const [notifications, setNotifications] = useState([]);
+  const [readNotifIds, setReadNotifIds] = useState({});
   const [notifOpen, setNotifOpen] = useState(false);
   const notifWrapRef = useRef(null);
 
@@ -332,7 +364,56 @@ export default function App() {
   const activeTabLabel = tabs.find((item) => item.id === tab)?.label || 'Home';
   const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
   const workerImage = worker?.profileImage || '';
-  const showNotifDot = notifications.length > 0 && !notifOpen;
+  const unreadNotifications = notifications.filter((notification) => !readNotifIds[notification.id]);
+  const showNotifDot = unreadNotifications.length > 0 && !notifOpen;
+
+  useEffect(() => {
+    if (!worker?._id) return;
+    try {
+      const saved = localStorage.getItem(`gigshield_read_notifications_${worker._id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          setReadNotifIds(parsed);
+          return;
+        }
+      }
+    } catch {
+      // no-op
+    }
+    setReadNotifIds({});
+  }, [worker?._id]);
+
+  useEffect(() => {
+    if (!worker?._id) return;
+    localStorage.setItem(`gigshield_read_notifications_${worker._id}`, JSON.stringify(readNotifIds));
+  }, [worker?._id, readNotifIds]);
+
+  useEffect(() => {
+    if (!notifOpen || notifications.length === 0) return;
+    setReadNotifIds((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      notifications.forEach((notification) => {
+        if (!next[notification.id]) {
+          next[notification.id] = true;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [notifOpen, notifications]);
+
+  function markAllNotificationsAsRead() {
+    if (notifications.length === 0) return;
+    setReadNotifIds((prev) => {
+      const next = { ...prev };
+      notifications.forEach((notification) => {
+        next[notification.id] = true;
+      });
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!worker?._id) return;
@@ -469,13 +550,23 @@ export default function App() {
             </button>
             {notifOpen && (
               <div className="app-notif-panel">
-                <div className="app-notif-head">Notifications</div>
+                <div className="app-notif-head">
+                  <span>Notifications</span>
+                  {unreadNotifications.length > 0 && (
+                    <button className="app-notif-clear" onClick={markAllNotificationsAsRead}>
+                      Mark all read
+                    </button>
+                  )}
+                </div>
                 {notifications.length === 0 ? (
                   <div className="app-notif-empty">No new messages.</div>
                 ) : (
                   <div className="app-notif-list">
                     {notifications.map((notification) => (
-                      <div className="app-notif-item" key={notification.id}>
+                      <div
+                        className={`app-notif-item ${readNotifIds[notification.id] ? 'read' : 'unread'}`}
+                        key={notification.id}
+                      >
                         {notification.text}
                       </div>
                     ))}
