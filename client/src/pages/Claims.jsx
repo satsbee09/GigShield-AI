@@ -13,6 +13,12 @@ const TRIGGER_ICON = {
   traffic:     '🚦',
 };
 const icon = t => TRIGGER_ICON[t] || '⚡';
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'processing', label: 'Processing' },
+  { id: 'paid', label: 'Paid' },
+  { id: 'rejected', label: 'Rejected' },
+];
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
@@ -91,6 +97,75 @@ const css = `
     font-size: 10px;
     letter-spacing: 0.8px;
     text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .cl-controls {
+    margin-bottom: 14px;
+  }
+  .cl-search {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 11px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.03);
+    color: #fff;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  .cl-search::placeholder { color: #2E455B; }
+  .cl-search:focus {
+    border-color: rgba(0,229,160,0.34);
+    background: rgba(0,229,160,0.03);
+  }
+  .cl-filter-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .cl-filter-row::-webkit-scrollbar { display: none; }
+  .cl-filter-chip {
+    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.03);
+    border-radius: 999px;
+    color: #7A95AA;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 6px 10px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .cl-filter-chip.active {
+    border-color: rgba(0,229,160,0.32);
+    background: rgba(0,229,160,0.07);
+    color: #00E5A0;
+  }
+  .cl-filter-meta {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 7px;
+  }
+  .cl-active-badge {
+    border-radius: 999px;
+    border: 1px solid rgba(0,229,160,0.32);
+    background: rgba(0,229,160,0.08);
+    color: #00E5A0;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    padding: 3px 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .cl-results-note {
+    color: #4E677D;
+    font-size: 11px;
     margin-bottom: 10px;
   }
 
@@ -215,6 +290,8 @@ const css = `
 export default function Claims({ worker }) {
   const [claims,  setClaims]  = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
     if (!worker?._id) return;
@@ -235,6 +312,31 @@ export default function Claims({ worker }) {
   const paid      = claims.filter(c => c.status === 'paid');
   const total     = paid.reduce((s, c) => s + (c.payoutAmount || 0), 0);
   const pending   = claims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
+  const rejected  = claims.filter(c => c.status === 'rejected');
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredClaims = claims.filter((claim) => {
+    const status = claim.status || 'pending';
+    const matchesFilter =
+      activeFilter === 'all'
+        ? true
+        : activeFilter === 'processing'
+          ? status !== 'paid' && status !== 'rejected'
+          : status === activeFilter;
+
+    const trigger = (claim.triggerType || 'disruption').replace(/_/g, ' ').toLowerCase();
+    const matchesSearch = normalizedSearch
+      ? trigger.includes(normalizedSearch)
+      : true;
+
+    return matchesFilter && matchesSearch;
+  });
+
+  const filteredPending = filteredClaims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
+  const filteredPaid = filteredClaims.filter(c => c.status === 'paid');
+  const filteredRejected = filteredClaims.filter(c => c.status === 'rejected');
+  const hasActiveControls = searchTerm.trim().length > 0 || activeFilter !== 'all';
+  const activeFiltersCount = (searchTerm.trim().length > 0 ? 1 : 0) + (activeFilter !== 'all' ? 1 : 0);
 
   return (
     <>
@@ -267,6 +369,40 @@ export default function Claims({ worker }) {
             </div>
           </div>
 
+          {/* Controls */}
+          <div className="cl-controls cl-animate-2">
+            <input
+              className="cl-search"
+              placeholder="Search by disruption type"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="cl-filter-row">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter.id}
+                  className={`cl-filter-chip ${activeFilter === filter.id ? 'active' : ''}`}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+            {hasActiveControls && (
+              <div className="cl-filter-meta">
+                <button
+                  className="cl-active-badge"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setActiveFilter('all');
+                  }}
+                >
+                  {activeFiltersCount} active
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Empty state */}
           {claims.length === 0 ? (
             <div className="cl-empty cl-animate">
@@ -278,25 +414,53 @@ export default function Claims({ worker }) {
             </div>
           ) : (
             <>
+              <div className="cl-results-note">
+                Showing {filteredClaims.length} of {claims.length} claims · {pending.length} processing · {paid.length} paid · {rejected.length} rejected
+              </div>
+
+              {filteredClaims.length === 0 ? (
+                <div className="cl-empty cl-animate">
+                  <div className="cl-empty-icon">🔎</div>
+                  <div className="cl-empty-title">No matching claims</div>
+                  <div className="cl-empty-sub">
+                    Try changing filters or search for a different disruption type.
+                  </div>
+                </div>
+              ) : (
+                <>
               {/* Pending */}
-              {pending.length > 0 && (
+              {filteredPending.length > 0 && (
                 <>
                   <div className="cl-section-title">Processing</div>
-                  {pending.map((c, i) => (
+                  {filteredPending.map((c, i) => (
                     <ClaimCard key={i} claim={c} delay={i * 60} />
                   ))}
                 </>
               )}
 
               {/* Paid */}
-              {paid.length > 0 && (
+              {filteredPaid.length > 0 && (
                 <>
-                  <div className="cl-section-title" style={{ marginTop: pending.length ? 16 : 0 }}>
+                  <div className="cl-section-title" style={{ marginTop: filteredPending.length ? 16 : 0 }}>
                     Paid out
                   </div>
-                  {paid.map((c, i) => (
+                  {filteredPaid.map((c, i) => (
                     <ClaimCard key={i} claim={c} delay={i * 60} />
                   ))}
+                </>
+              )}
+
+              {/* Rejected */}
+              {filteredRejected.length > 0 && (
+                <>
+                  <div className="cl-section-title" style={{ marginTop: filteredPending.length || filteredPaid.length ? 16 : 0 }}>
+                    Rejected
+                  </div>
+                  {filteredRejected.map((c, i) => (
+                    <ClaimCard key={i} claim={c} delay={i * 60} />
+                  ))}
+                </>
+              )}
                 </>
               )}
             </>

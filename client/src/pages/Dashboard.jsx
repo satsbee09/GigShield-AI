@@ -268,6 +268,81 @@ const css = `
     margin-bottom: 8px;
   }
 
+  .db-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .db-section-link {
+    border: none;
+    background: transparent;
+    color: #00E5A0;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .db-claims-list {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 6px 12px;
+    margin-bottom: 12px;
+  }
+  .db-claims-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .db-claims-item:last-child { border-bottom: none; }
+  .db-claims-main { min-width: 0; }
+  .db-claims-type {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: capitalize;
+    margin-bottom: 2px;
+  }
+  .db-claims-meta {
+    color: #3A5570;
+    font-size: 11px;
+  }
+  .db-claims-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .db-claims-amt {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .db-claims-status {
+    border: 1px solid;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  .db-empty-claims {
+    border: 1px dashed rgba(255,255,255,0.14);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    color: #6E859B;
+    font-size: 12px;
+    text-align: center;
+  }
+
   .db-loading {
     background: #070E1A;
     min-height: 100vh;
@@ -280,6 +355,94 @@ const css = `
     letter-spacing: 0.5px;
   }
 
+  .db-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 8, 16, 0.74);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 30;
+  }
+  .db-modal {
+    width: min(420px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(180deg, rgba(8,18,32,0.98) 0%, rgba(7,14,26,0.98) 100%);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.42);
+    overflow: hidden;
+  }
+  .db-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .db-modal-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .db-modal-badge {
+    font-size: 10px;
+    color: #FFB347;
+    border: 1px solid rgba(255,179,71,0.28);
+    background: rgba(255,179,71,0.08);
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .db-modal-body { padding: 14px 16px 16px; }
+  .db-modal-text {
+    color: #9FB2C6;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .db-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .db-modal-metric {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+  }
+  .db-modal-metric-k {
+    color: #6C849B;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+  .db-modal-metric-v {
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    letter-spacing: -0.3px;
+  }
+  .db-modal-actions { display: flex; justify-content: flex-end; }
+  .db-modal-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 16px;
+    background: linear-gradient(135deg, #00E5A0, #00B87A);
+    color: #06101C;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+  }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -290,12 +453,19 @@ const css = `
   .db-animate-4 { animation: fadeUp 0.3s 0.24s ease both; }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy }) {
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, showHeader = true }) {
   const [policy,  setPolicy]  = useState(null);
   const [claims,  setClaims]  = useState([]);
   const [wScore,  setWScore]  = useState(null);
   const [loading, setLoading] = useState(true);
   const [simming, setSimming] = useState(false);
+  const [notice, setNotice] = useState(null);
+
+  useEffect(() => {
+    if (notice?.type !== 'disruption') return;
+    const t = setTimeout(() => setNotice(null), 1500);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   useEffect(() => {
     async function load() {
@@ -324,16 +494,29 @@ export default function Dashboard({ worker, onBuyPolicy }) {
   async function handleSimulate() {
     setSimming(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/workability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rainfall_mm: 120, temperature: 42, aqi: 450, traffic_index: 0.9 })
+      const res = await fetch('http://127.0.0.1:8000/workability/simulate?rainfall_mm=120&temp_c=42&aqi=450', {
+        method: 'POST'
       });
+      if (!res.ok) throw new Error('simulate_failed');
       const data = await res.json();
-      setWScore(data.workabilityScore ?? 20);
-      alert(`⚡ Disruption detected!\n\nWorkability: ${data.workabilityScore}/100\nPayout: ${data.payoutPercent}%`);
+      const score = data.workabilityScore ?? 20;
+      const payout = data.payoutPercent ?? 0;
+      setWScore(score);
+      setNotice({
+        type: 'disruption',
+        title: 'Disruption detected',
+        message: 'Severe conditions were simulated. Claim processing can be triggered automatically when this state is live.',
+        score,
+        payout
+      });
     } catch {
-      alert('Could not reach AI engine — make sure FastAPI is running on port 8000.');
+      setNotice({
+        type: 'error',
+        title: 'AI engine unavailable',
+        message: 'Could not reach FastAPI on port 8000. Please ensure the AI engine is running.',
+        score: null,
+        payout: null
+      });
     }
     setSimming(false);
   }
@@ -348,8 +531,10 @@ export default function Dashboard({ worker, onBuyPolicy }) {
   }
 
   const paid  = claims.filter(c => c.status === 'paid');
+  const pending = claims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
   const total = paid.reduce((s, c) => s + (c.payoutAmount || 0), 0);
   const color = wScore !== null ? wColor(wScore) : '#3A5570';
+  const recentClaims = claims.slice(0, 3);
 
   return (
     <>
@@ -358,13 +543,15 @@ export default function Dashboard({ worker, onBuyPolicy }) {
         <div className="db-bg-orb" />
 
         {/* Header */}
-        <div className="db-header db-animate">
-          <div>
-            <div className="db-greeting">Good day,</div>
-            <div className="db-name">{worker.name}</div>
+        {showHeader && (
+          <div className="db-header db-animate">
+            <div>
+              <div className="db-greeting">Good day,</div>
+              <div className="db-name">{worker.name}</div>
+            </div>
+            <div className="db-avatar">{worker.name?.[0]?.toUpperCase()}</div>
           </div>
-          <div className="db-avatar">{worker.name?.[0]?.toUpperCase()}</div>
-        </div>
+        )}
 
         <div className="db-scroll">
 
@@ -442,30 +629,62 @@ export default function Dashboard({ worker, onBuyPolicy }) {
             </div>
           </div>
 
-          {/* Latest Claim */}
-          {claims[0] && (
-            <div className="db-claim-card db-animate-4">
-              <div className="db-claim-header">Latest claim</div>
-              <div className="db-claim-row">
-                <div>
-                  <div className="db-claim-type">
-                    {claims[0].triggerType?.replace(/_/g, ' ')}
-                  </div>
-                  <div className="db-claim-date">
-                    {new Date(claims[0].createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
-                </div>
-                <div
-                  className="db-claim-amount"
-                  style={{ color: claims[0].status === 'paid' ? '#00E5A0' : '#FFB347' }}
-                >
-                  {claims[0].status === 'paid'
-                    ? `+₹${claims[0].payoutAmount}`
-                    : 'Processing'}
-                </div>
+          {/* Recent Claims */}
+          <div className="db-animate-4" style={{ marginTop: 8 }}>
+            <div className="db-section-head">
+              <div className="db-section-title" style={{ marginBottom: 0 }}>Recent claim activity</div>
+              <button className="db-section-link" onClick={onOpenClaims}>View all</button>
+            </div>
+
+            {recentClaims.length === 0 ? (
+              <div className="db-empty-claims">
+                No claims yet. You’re covered—claims will appear automatically during disruptions.
+              </div>
+            ) : (
+              <div className="db-claims-list">
+                {recentClaims.map((claim, index) => {
+                  const isPaid = claim.status === 'paid';
+                  const isRejected = claim.status === 'rejected';
+                  const statusColor = isPaid ? '#00E5A0' : isRejected ? '#FF5C5C' : '#FFB347';
+                  return (
+                    <div className="db-claims-item" key={claim._id || index}>
+                      <div className="db-claims-main">
+                        <div className="db-claims-type">{claim.triggerType?.replace(/_/g, ' ') || 'Disruption event'}</div>
+                        <div className="db-claims-meta">
+                          {new Date(claim.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
+                      <div className="db-claims-right">
+                        <div className="db-claims-amt" style={{ color: statusColor }}>
+                          {isPaid ? `+₹${claim.payoutAmount || 0}` : 'Pending'}
+                        </div>
+                        <div
+                          className="db-claims-status"
+                          style={{ color: statusColor, borderColor: `${statusColor}66`, background: `${statusColor}12` }}
+                        >
+                          {claim.status || 'processing'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Coverage Snapshot */}
+          <div className="db-claim-card db-animate-4">
+            <div className="db-claim-header">Coverage snapshot</div>
+            <div className="db-claim-row">
+              <div>
+                <div className="db-claim-type">Claims in processing</div>
+                <div className="db-claim-date">Auto-review based on live disruption data</div>
+              </div>
+              <div className="db-claim-amount" style={{ color: pending.length ? '#FFB347' : '#00E5A0' }}>
+                {pending.length}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Simulate Disruption */}
           <button className="db-sim-btn" onClick={handleSimulate} disabled={simming}>
@@ -481,6 +700,37 @@ export default function Dashboard({ worker, onBuyPolicy }) {
           </div>
 
         </div>
+
+        {notice && (
+          <div className="db-modal-backdrop" onClick={() => setNotice(null)}>
+            <div className="db-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="db-modal-head">
+                <div className="db-modal-title">{notice.title}</div>
+                <div className="db-modal-badge">{notice.type === 'error' ? 'Error' : 'Alert'}</div>
+              </div>
+              <div className="db-modal-body">
+                <div className="db-modal-text">{notice.message}</div>
+                {notice.type === 'disruption' && (
+                  <div className="db-modal-grid">
+                    <div className="db-modal-metric">
+                      <div className="db-modal-metric-k">Workability</div>
+                      <div className="db-modal-metric-v">{notice.score}/100</div>
+                    </div>
+                    <div className="db-modal-metric">
+                      <div className="db-modal-metric-k">Payout</div>
+                      <div className="db-modal-metric-v">{notice.payout}%</div>
+                    </div>
+                  </div>
+                )}
+                <div className="db-modal-actions">
+                  <button className="db-modal-btn" onClick={() => setNotice(null)}>
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

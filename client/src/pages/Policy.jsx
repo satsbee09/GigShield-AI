@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const TIER_COLOR = { low: '#00E5A0', medium: '#FFB347', high: '#FF5C5C' };
 const TIER_BG    = { low: 'rgba(0,229,160,0.06)', medium: 'rgba(255,179,71,0.06)', high: 'rgba(255,92,92,0.06)' };
@@ -227,6 +227,76 @@ const css = `
   @keyframes spin { to { transform: rotate(360deg); } }
   .pl-loading-text { color: #3A5570; font-size: 13px; letter-spacing: 0.3px; }
 
+  .pl-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 8, 16, 0.74);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 120;
+  }
+  .pl-modal {
+    width: min(420px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(180deg, rgba(8,18,32,0.98) 0%, rgba(7,14,26,0.98) 100%);
+    box-shadow: 0 18px 48px rgba(0,0,0,0.42);
+    overflow: hidden;
+  }
+  .pl-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .pl-modal-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .pl-modal-badge {
+    font-size: 10px;
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .pl-modal-badge.success {
+    color: #00E5A0;
+    border: 1px solid rgba(0,229,160,0.28);
+    background: rgba(0,229,160,0.08);
+  }
+  .pl-modal-badge.error {
+    color: #FFB347;
+    border: 1px solid rgba(255,179,71,0.28);
+    background: rgba(255,179,71,0.08);
+  }
+  .pl-modal-body { padding: 14px 16px 16px; }
+  .pl-modal-text {
+    color: #9FB2C6;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .pl-modal-actions { display: flex; justify-content: flex-end; }
+  .pl-modal-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 16px;
+    background: linear-gradient(135deg, #00E5A0, #00B87A);
+    color: #06101C;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+  }
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -238,6 +308,15 @@ const css = `
 
 export default function Policy({ worker, onSuccess, onBack }) {
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState(null);
+
+  useEffect(() => {
+    if (notice?.type !== 'success' || !notice?.worker) return;
+    const t = setTimeout(() => {
+      onSuccess(notice.worker);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [notice, onSuccess]);
 
   const tier     = worker?.premiumTier || 'high';
   const color    = TIER_COLOR[tier];
@@ -264,13 +343,26 @@ export default function Policy({ worker, onSuccess, onBack }) {
           policy: data.policy
         };
         localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
-        onSuccess(updatedWorker);
+        setNotice({
+          type: 'success',
+          title: 'Policy activated',
+          message: 'Your weekly income shield is now active. Live monitoring and auto-claims are enabled.',
+          worker: updatedWorker
+        });
       } else {
-        alert('Failed to buy policy. Please try again.');
+        setNotice({
+          type: 'error',
+          title: 'Policy activation failed',
+          message: 'We could not activate your policy right now. Please try again.'
+        });
       }
     } catch (err) {
       console.error(err);
-      alert('Connection error. Make sure the server is running.');
+      setNotice({
+        type: 'error',
+        title: 'Connection error',
+        message: 'Unable to reach the server. Please make sure the backend is running on port 5000.'
+      });
     }
     setLoading(false);
   };
@@ -286,6 +378,37 @@ export default function Policy({ worker, onSuccess, onBack }) {
           <div className="pl-loading-overlay">
             <div className="pl-spinner" />
             <div className="pl-loading-text">Processing your policy…</div>
+          </div>
+        )}
+
+        {notice && (
+          <div className="pl-modal-backdrop" onClick={() => setNotice(null)}>
+            <div className="pl-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="pl-modal-head">
+                <div className="pl-modal-title">{notice.title}</div>
+                <div className={`pl-modal-badge ${notice.type === 'success' ? 'success' : 'error'}`}>
+                  {notice.type === 'success' ? 'Success' : 'Error'}
+                </div>
+              </div>
+              <div className="pl-modal-body">
+                <div className="pl-modal-text">{notice.message}</div>
+                <div className="pl-modal-actions">
+                  <button
+                    className="pl-modal-btn"
+                    onClick={() => {
+                      if (notice.type === 'success' && notice.worker) {
+                        setNotice(null);
+                        onSuccess(notice.worker);
+                        return;
+                      }
+                      setNotice(null);
+                    }}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
