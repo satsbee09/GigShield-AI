@@ -16,7 +16,10 @@ const css = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   .pf-screen {
-    background: #070E1A;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(25,215,165,0.12), transparent 28%),
+      radial-gradient(circle at 10% 80%, rgba(79,140,255,0.12), transparent 26%),
+      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
     min-height: 100vh;
     font-family: 'DM Sans', sans-serif;
     padding: 48px 16px 28px;
@@ -30,7 +33,7 @@ const css = `
     right: -70px;
     bottom: -70px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,229,160,0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(25,215,165,0.08) 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -42,11 +45,14 @@ const css = `
   }
 
   .pf-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
     padding: 16px;
     margin-bottom: 12px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
   }
 
   .pf-head {
@@ -59,9 +65,9 @@ const css = `
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(0,229,160,0.08);
-    border: 1px solid rgba(0,229,160,0.2);
-    color: #00E5A0;
+    background: linear-gradient(135deg, rgba(25,215,165,0.16), rgba(79,140,255,0.12));
+    border: 1px solid rgba(25,215,165,0.22);
+    color: #66f0c9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,12 +93,12 @@ const css = `
   }
 
   .pf-sub {
-    color: #7A95AA;
+    color: #8ea3bc;
     font-size: 12px;
   }
 
   .pf-title {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 10px;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -104,7 +110,7 @@ const css = `
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
 
   .pf-row:last-child {
@@ -112,7 +118,7 @@ const css = `
   }
 
   .pf-key {
-    color: #7A95AA;
+    color: #8ea3bc;
     font-size: 12px;
   }
 
@@ -133,8 +139,8 @@ const css = `
     width: 100%;
     margin-top: 6px;
     border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
     color: #fff;
     padding: 10px 11px;
     font-size: 13px;
@@ -144,8 +150,9 @@ const css = `
 
   .pf-input:focus,
   .pf-select:focus {
-    border-color: rgba(0,229,160,0.3);
-    background: rgba(0,229,160,0.03);
+    border-color: rgba(25,215,165,0.3);
+    background: rgba(25,215,165,0.04);
+    box-shadow: 0 0 0 4px rgba(25,215,165,0.08);
   }
 
   .pf-select option {
@@ -157,7 +164,7 @@ const css = `
   }
 
   .pf-label {
-    color: #7A95AA;
+    color: #8ea3bc;
     font-size: 11px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -172,7 +179,7 @@ const css = `
   .pf-save-btn,
   .pf-cancel-btn {
     flex: 1;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px;
     font-size: 13px;
     font-family: 'DM Sans', sans-serif;
@@ -180,21 +187,21 @@ const css = `
   }
 
   .pf-save-btn {
-    border: 1px solid rgba(0,229,160,0.25);
-    background: rgba(0,229,160,0.08);
-    color: #00E5A0;
+    border: 1px solid rgba(25,215,165,0.25);
+    background: rgba(25,215,165,0.08);
+    color: #66f0c9;
   }
 
   .pf-cancel-btn {
     border: 1px solid rgba(255,255,255,0.12);
     background: transparent;
-    color: #9FB2C6;
+    color: #b0bfd0;
   }
 
   .pf-error {
     margin-top: 2px;
     margin-bottom: 10px;
-    color: #FF6F6F;
+    color: #ff7b7b;
     font-size: 12px;
   }
 
@@ -207,9 +214,9 @@ const css = `
 
   .pf-photo-btn {
     border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.03);
-    color: #9FB2C6;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    color: #b0bfd0;
+    border-radius: 12px;
     padding: 8px 11px;
     font-size: 12px;
     font-family: 'DM Sans', sans-serif;
@@ -222,10 +229,10 @@ const css = `
   }
 
   .pf-photo-remove {
-    border: 1px solid rgba(232,85,85,0.35);
+    border: 1px solid rgba(255,107,107,0.35);
     background: transparent;
-    color: #E85555;
-    border-radius: 10px;
+    color: #ff7b7b;
+    border-radius: 12px;
     padding: 8px 11px;
     font-size: 12px;
     font-family: 'DM Sans', sans-serif;
@@ -247,9 +254,9 @@ const css = `
     transform: translateX(-50%);
     z-index: 60;
     border-radius: 10px;
-    border: 1px solid rgba(0,229,160,0.25);
-    background: rgba(0,229,160,0.08);
-    color: #00E5A0;
+    border: 1px solid rgba(25,215,165,0.25);
+    background: rgba(25,215,165,0.08);
+    color: #66f0c9;
     font-size: 12px;
     padding: 9px 13px;
     white-space: nowrap;
@@ -263,10 +270,12 @@ const css = `
   }
 
   .pf-stat {
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
-    background: rgba(255,255,255,0.02);
+    background: rgba(255,255,255,0.04);
     padding: 12px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   .pf-stat-val {
@@ -277,11 +286,11 @@ const css = `
   }
 
   .pf-stat-val.green {
-    color: #00E5A0;
+    color: #66f0c9;
   }
 
   .pf-stat-key {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 10px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -289,11 +298,11 @@ const css = `
 
   .pf-btn {
     width: 100%;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 12px;
     border: 1px solid rgba(255,255,255,0.08);
-    background: transparent;
-    color: #9FB2C6;
+    background: rgba(255,255,255,0.03);
+    color: #b0bfd0;
     font-size: 13px;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
@@ -306,14 +315,14 @@ const css = `
   }
 
   .pf-btn-green {
-    border-color: rgba(0,229,160,0.25);
-    background: rgba(0,229,160,0.06);
-    color: #00E5A0;
+    border-color: rgba(25,215,165,0.25);
+    background: rgba(25,215,165,0.08);
+    color: #66f0c9;
   }
 
   .pf-btn-danger {
-    border-color: rgba(232,85,85,0.35);
-    color: #E85555;
+    border-color: rgba(255,107,107,0.35);
+    color: #ff7b7b;
   }
 `;
 

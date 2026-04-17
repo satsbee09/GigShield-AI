@@ -26,7 +26,10 @@ const css = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   .cl-screen {
-    background: #070E1A;
+    background:
+      radial-gradient(circle at top left, rgba(79,140,255,0.14), transparent 28%),
+      radial-gradient(circle at 80% 15%, rgba(25,215,165,0.12), transparent 24%),
+      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
     min-height: 100vh;
     font-family: 'DM Sans', sans-serif;
     padding: 48px 16px 32px;
@@ -36,7 +39,7 @@ const css = `
   .cl-bg-orb {
     position: fixed;
     width: 260px; height: 260px;
-    background: radial-gradient(circle, rgba(0,100,255,0.05) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(79,140,255,0.08) 0%, transparent 70%);
     border-radius: 50%;
     top: -40px; left: -60px;
     pointer-events: none;
@@ -49,13 +52,13 @@ const css = `
 
   .cl-heading {
     color: #fff;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 600;
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
+    letter-spacing: -0.7px;
+    margin-bottom: 6px;
   }
   .cl-subheading {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 13px;
     margin-bottom: 24px;
   }
@@ -68,11 +71,13 @@ const css = `
     margin-bottom: 20px;
   }
   .cl-summary-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     padding: 12px 10px;
     text-align: center;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
   .cl-summary-val {
     font-family: 'DM Mono', monospace;
@@ -83,9 +88,9 @@ const css = `
     line-height: 1;
     margin-bottom: 4px;
   }
-  .cl-summary-val.green { color: #00E5A0; }
+  .cl-summary-val.green { color: #66f0c9; }
   .cl-summary-label {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 9px;
     letter-spacing: 0.6px;
     text-transform: uppercase;
@@ -93,7 +98,7 @@ const css = `
 
   /* ── Section title ── */
   .cl-section-title {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 10px;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -106,9 +111,9 @@ const css = `
   .cl-search {
     width: 100%;
     padding: 11px 12px;
-    border-radius: 11px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
     color: #fff;
     font-size: 13px;
     font-family: 'DM Sans', sans-serif;
@@ -117,8 +122,9 @@ const css = `
   }
   .cl-search::placeholder { color: #2E455B; }
   .cl-search:focus {
-    border-color: rgba(0,229,160,0.34);
-    background: rgba(0,229,160,0.03);
+    border-color: rgba(25,215,165,0.34);
+    background: rgba(25,215,165,0.04);
+    box-shadow: 0 0 0 4px rgba(25,215,165,0.08);
   }
   .cl-filter-row {
     display: flex;
@@ -130,9 +136,9 @@ const css = `
   .cl-filter-row::-webkit-scrollbar { display: none; }
   .cl-filter-chip {
     border: 1px solid rgba(255,255,255,0.09);
-    background: rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.04);
     border-radius: 999px;
-    color: #7A95AA;
+    color: #90a4ba;
     font-size: 11px;
     font-family: 'DM Sans', sans-serif;
     padding: 6px 10px;
@@ -141,9 +147,9 @@ const css = `
     transition: border-color 0.2s, color 0.2s, background 0.2s;
   }
   .cl-filter-chip.active {
-    border-color: rgba(0,229,160,0.32);
-    background: rgba(0,229,160,0.07);
-    color: #00E5A0;
+    border-color: rgba(25,215,165,0.34);
+    background: rgba(25,215,165,0.08);
+    color: #66f0c9;
   }
   .cl-filter-meta {
     display: flex;
@@ -152,9 +158,9 @@ const css = `
   }
   .cl-active-badge {
     border-radius: 999px;
-    border: 1px solid rgba(0,229,160,0.32);
-    background: rgba(0,229,160,0.08);
-    color: #00E5A0;
+    border: 1px solid rgba(25,215,165,0.32);
+    background: rgba(25,215,165,0.08);
+    color: #66f0c9;
     font-size: 10px;
     letter-spacing: 0.4px;
     padding: 3px 8px;
@@ -164,21 +170,23 @@ const css = `
     font-family: 'DM Sans', sans-serif;
   }
   .cl-results-note {
-    color: #4E677D;
+    color: #8ea3bc;
     font-size: 11px;
     margin-bottom: 10px;
   }
 
   /* ── Claim Card ── */
   .cl-claim-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 14px;
     padding: 16px;
     margin-bottom: 10px;
     transition: border-color 0.2s;
     animation: fadeUp 0.3s ease forwards;
     opacity: 0;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
   .cl-claim-card:hover { border-color: rgba(255,255,255,0.1); }
 
@@ -204,7 +212,7 @@ const css = `
     margin-bottom: 2px;
     letter-spacing: -0.2px;
   }
-  .cl-claim-date { color: #3A5570; font-size: 11px; }
+  .cl-claim-date { color: #8ea3bc; font-size: 11px; }
 
   .cl-claim-amount {
     font-family: 'DM Mono', monospace;
@@ -215,7 +223,7 @@ const css = `
 
   .cl-claim-divider {
     height: 1px;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.06);
     margin: 10px 0;
   }
 
@@ -239,7 +247,7 @@ const css = `
     border-radius: 50%;
     background: currentColor;
   }
-  .cl-payout-label { color: #3A5570; font-size: 11px; }
+  .cl-payout-label { color: #8ea3bc; font-size: 11px; }
 
   /* ── Empty State ── */
   .cl-empty {
@@ -262,7 +270,7 @@ const css = `
     margin-bottom: 6px;
   }
   .cl-empty-sub {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 13px;
     line-height: 1.5;
     max-width: 220px;
@@ -272,9 +280,9 @@ const css = `
   .cl-loading {
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh;
-    background: #070E1A;
+    background: linear-gradient(180deg, #050b14 0%, #07111f 100%);
     font-family: 'DM Sans', sans-serif;
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 13px;
     letter-spacing: 0.4px;
   }

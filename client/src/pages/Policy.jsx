@@ -11,7 +11,10 @@ const css = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   .pl-screen {
-    background: #070E1A;
+    background:
+      radial-gradient(circle at top right, rgba(25,215,165,0.12), transparent 28%),
+      radial-gradient(circle at 15% 80%, rgba(79,140,255,0.12), transparent 26%),
+      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
     min-height: 100vh;
     font-family: 'DM Sans', sans-serif;
     padding: 48px 20px 40px;
@@ -22,7 +25,7 @@ const css = `
   .pl-bg-orb {
     position: fixed;
     width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(0,229,160,0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(25,215,165,0.09) 0%, transparent 70%);
     border-radius: 50%;
     bottom: -60px; right: -60px;
     pointer-events: none;
@@ -44,24 +47,24 @@ const css = `
   .pl-back-btn {
     display: flex; align-items: center; gap: 6px;
     background: none; border: none;
-    color: #3A5570; font-size: 13px;
+    color: #8ea3bc; font-size: 13px;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer; padding: 0;
     margin-bottom: 32px;
     transition: color 0.2s;
   }
-  .pl-back-btn:hover { color: #7A95AA; }
+  .pl-back-btn:hover { color: #fff; }
 
   .pl-heading {
     color: #fff;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 600;
-    letter-spacing: -0.6px;
+    letter-spacing: -0.75px;
     line-height: 1.15;
     margin-bottom: 6px;
   }
   .pl-subheading {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 14px;
     margin-bottom: 28px;
     line-height: 1.5;
@@ -75,6 +78,7 @@ const css = `
     border: 1px solid;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.16);
   }
   .pl-price-card::after {
     content: '';
@@ -111,20 +115,22 @@ const css = `
   }
   .pl-price-unit {
     font-size: 14px;
-    color: #3A5570;
+    color: #8ea3bc;
     font-weight: 400;
     margin-bottom: 6px;
     margin-left: 3px;
   }
   .pl-price-note {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 12px;
   }
 
   /* ── Info List ── */
   .pl-info-list {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-radius: 14px;
     overflow: hidden;
     margin-bottom: 14px;
@@ -137,22 +143,24 @@ const css = `
     border-bottom: 1px solid rgba(255,255,255,0.04);
   }
   .pl-info-row:last-child { border-bottom: none; }
-  .pl-info-key { color: #3A5570; font-size: 13px; }
+  .pl-info-key { color: #8ea3bc; font-size: 13px; }
   .pl-info-val { color: #fff; font-size: 13px; font-weight: 500; }
   .pl-info-val.green { color: #00E5A0; }
   .pl-info-val.mono  { font-family: 'DM Mono', monospace; }
 
   /* ── What's covered ── */
   .pl-covered-list {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-radius: 14px;
     overflow: hidden;
     margin-bottom: 20px;
   }
   .pl-covered-header {
     padding: 10px 16px 6px;
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 10px;
     letter-spacing: 0.8px;
     text-transform: uppercase;
@@ -165,15 +173,15 @@ const css = `
   }
   .pl-covered-item:last-child { border-bottom: none; }
   .pl-covered-icon { font-size: 15px; }
-  .pl-covered-text { color: #7A95AA; font-size: 13px; }
+  .pl-covered-text { color: #a2b5c8; font-size: 13px; }
 
   /* ── Buttons ── */
   .pl-btn-primary {
     width: 100%;
     padding: 15px;
-    border-radius: 13px;
+    border-radius: 14px;
     border: none;
-    background: linear-gradient(135deg, #00E5A0, #00B87A);
+    background: linear-gradient(135deg, #19d7a5 0%, #2db7ff 100%);
     color: #050E18;
     font-size: 15px;
     font-weight: 600;
@@ -191,19 +199,19 @@ const css = `
     width: 100%;
     padding: 13px;
     border-radius: 13px;
-    border: 1px solid rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.08);
     background: transparent;
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 14px;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
     transition: color 0.2s, border-color 0.2s;
   }
-  .pl-btn-secondary:hover { color: #7A95AA; border-color: rgba(255,255,255,0.14); }
+  .pl-btn-secondary:hover { color: #fff; border-color: rgba(255,255,255,0.14); }
 
   .pl-disclaimer {
     text-align: center;
-    color: #1E3045;
+    color: #6c7f95;
     font-size: 11px;
     margin-top: 14px;
     line-height: 1.5;
@@ -212,20 +220,20 @@ const css = `
   /* loading state overlay */
   .pl-loading-overlay {
     position: fixed; inset: 0;
-    background: rgba(7,14,26,0.85);
+    background: rgba(5,11,20,0.86);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     z-index: 100; gap: 14px;
   }
   .pl-spinner {
     width: 36px; height: 36px;
-    border: 2px solid rgba(0,229,160,0.15);
-    border-top-color: #00E5A0;
+    border: 2px solid rgba(25,215,165,0.15);
+    border-top-color: #19d7a5;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .pl-loading-text { color: #3A5570; font-size: 13px; letter-spacing: 0.3px; }
+  .pl-loading-text { color: #8ea3bc; font-size: 13px; letter-spacing: 0.3px; }
 
   .pl-modal-backdrop {
     position: fixed;
@@ -279,7 +287,7 @@ const css = `
   }
   .pl-modal-body { padding: 14px 16px 16px; }
   .pl-modal-text {
-    color: #9FB2C6;
+    color: #b5c4d4;
     font-size: 13px;
     line-height: 1.5;
     margin-bottom: 12px;
@@ -289,7 +297,7 @@ const css = `
     border: none;
     border-radius: 10px;
     padding: 9px 16px;
-    background: linear-gradient(135deg, #00E5A0, #00B87A);
+    background: linear-gradient(135deg, #19d7a5 0%, #2db7ff 100%);
     color: #06101C;
     font-size: 12px;
     font-weight: 700;

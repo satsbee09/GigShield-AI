@@ -19,7 +19,10 @@ const css = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   .gs-screen {
-    background: #070E1A;
+    background:
+      radial-gradient(circle at top left, rgba(79,140,255,0.14), transparent 30%),
+      radial-gradient(circle at 85% 20%, rgba(25,215,165,0.12), transparent 26%),
+      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
     min-height: 100vh;
     font-family: 'DM Sans', sans-serif;
     position: relative;
@@ -29,7 +32,7 @@ const css = `
   .gs-bg-orb1 {
     position: fixed;
     width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(25,215,165,0.09) 0%, transparent 70%);
     border-radius: 50%;
     top: -80px; right: -80px;
     pointer-events: none;
@@ -37,7 +40,7 @@ const css = `
   .gs-bg-orb2 {
     position: fixed;
     width: 240px; height: 240px;
-    background: radial-gradient(circle, rgba(0,120,255,0.06) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(79,140,255,0.08) 0%, transparent 70%);
     border-radius: 50%;
     bottom: 80px; left: -60px;
     pointer-events: none;
@@ -68,10 +71,11 @@ const css = `
   }
   .gs-logo-icon {
     width: 34px; height: 34px;
-    background: linear-gradient(135deg, #00E5A0, #00A36C);
+    background: linear-gradient(135deg, #19d7a5, #4f8cff);
     border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     font-size: 16px;
+    box-shadow: 0 10px 24px rgba(25,215,165,0.18);
   }
   .gs-logo-text {
     font-size: 18px;
@@ -85,27 +89,27 @@ const css = `
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 32px;
+    margin-bottom: 34px;
   }
   .gs-step-dot {
-    height: 3px;
-    border-radius: 2px;
+    height: 4px;
+    border-radius: 999px;
     transition: all 0.3s ease;
-    background: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.1);
   }
   .gs-step-dot.active { background: #00E5A0; }
   .gs-step-dot.done   { background: rgba(0,229,160,0.35); }
 
   .gs-heading {
     color: #fff;
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 600;
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
-    line-height: 1.2;
+    letter-spacing: -0.8px;
+    margin-bottom: 8px;
+    line-height: 1.15;
   }
   .gs-subheading {
-    color: #4A6580;
+    color: #8aa0b7;
     font-size: 14px;
     margin-bottom: 28px;
     line-height: 1.5;
@@ -114,7 +118,7 @@ const css = `
 
   .gs-label {
     display: block;
-    color: #4A6580;
+    color: #92a6bb;
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.8px;
@@ -129,10 +133,10 @@ const css = `
   }
   .gs-prefix {
     padding: 12px 14px;
-    border-radius: 11px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.03);
-    color: #7A95AA;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #a0b2c7;
     font-size: 14px;
     font-family: 'DM Mono', monospace;
     white-space: nowrap;
@@ -141,21 +145,22 @@ const css = `
   .gs-input {
     width: 100%;
     padding: 12px 14px;
-    border-radius: 11px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
     color: #fff;
     font-size: 14px;
     font-family: 'DM Sans', sans-serif;
     margin-bottom: 16px;
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
     outline: none;
   }
   .gs-input:focus {
-    border-color: rgba(0,229,160,0.35);
-    background: rgba(0,229,160,0.03);
+    border-color: rgba(25,215,165,0.34);
+    background: rgba(25,215,165,0.04);
+    box-shadow: 0 0 0 4px rgba(25,215,165,0.08);
   }
-  .gs-input::placeholder { color: #2A3F52; }
+  .gs-input::placeholder { color: #41566d; }
 
   .gs-input-mono {
     font-family: 'DM Mono', monospace;
@@ -167,9 +172,9 @@ const css = `
   .gs-select {
     width: 100%;
     padding: 12px 14px;
-    border-radius: 11px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
     color: #fff;
     font-size: 14px;
     font-family: 'DM Sans', sans-serif;
@@ -192,10 +197,10 @@ const css = `
   }
   .gs-platform-chip {
     padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(255,255,255,0.03);
-    color: #4A6580;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #90a4ba;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -203,25 +208,26 @@ const css = `
     transition: all 0.15s ease;
   }
   .gs-platform-chip.selected {
-    border-color: rgba(0,229,160,0.4);
-    background: rgba(0,229,160,0.07);
-    color: #00E5A0;
+    border-color: rgba(25,215,165,0.35);
+    background: rgba(25,215,165,0.08);
+    color: #66f0c9;
   }
 
   .gs-btn {
     width: 100%;
     padding: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
     border: none;
-    background: linear-gradient(135deg, #00E5A0, #00B87A);
+    background: linear-gradient(135deg, #19d7a5 0%, #2db7ff 100%);
     color: #050E18;
     font-size: 14px;
     font-weight: 600;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
     margin-top: 8px;
-    transition: opacity 0.2s, transform 0.15s;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
     letter-spacing: 0.2px;
+    box-shadow: 0 14px 28px rgba(25,215,165,0.18);
   }
   .gs-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
   .gs-btn:active:not(:disabled) { transform: translateY(0); }
@@ -232,14 +238,14 @@ const css = `
     padding: 12px;
     background: transparent;
     border: none;
-    color: #4A6580;
+    color: #8ea3bc;
     font-size: 13px;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
     margin-top: 6px;
     transition: color 0.2s;
   }
-  .gs-link-btn:hover { color: #7A95AA; }
+  .gs-link-btn:hover { color: #ffffff; }
 
   .gs-error {
     color: #FF5C5C;
@@ -247,7 +253,7 @@ const css = `
     margin-bottom: 10px;
     padding: 8px 12px;
     background: rgba(255,92,92,0.08);
-    border-radius: 8px;
+    border-radius: 10px;
     border-left: 2px solid #FF5C5C;
   }
 
@@ -257,7 +263,7 @@ const css = `
     gap: 10px;
     background: rgba(255,179,71,0.06);
     border: 1px solid rgba(255,179,71,0.2);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px 14px;
     margin-bottom: 16px;
   }
@@ -279,18 +285,19 @@ const css = `
 
   .gs-divider {
     height: 1px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.06);
     margin: 20px 0;
   }
 
   /* Step 3 — plan card */
   .gs-plan-card {
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 20px;
     margin-bottom: 16px;
     border: 1px solid;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.18);
   }
   .gs-plan-card::before {
     content: '';
@@ -315,7 +322,7 @@ const css = `
     background: currentColor;
   }
   .gs-plan-price {
-    font-size: 42px;
+    font-size: 44px;
     font-weight: 600;
     color: #fff;
     letter-spacing: -2px;
@@ -325,21 +332,23 @@ const css = `
   }
   .gs-plan-price-unit {
     font-size: 14px;
-    color: #4A6580;
+    color: #8ea3bc;
     font-family: 'DM Sans', sans-serif;
     font-weight: 400;
     margin-left: 2px;
   }
   .gs-plan-subtitle {
-    color: #4A6580;
+    color: #8ea3bc;
     font-size: 12px;
     margin-top: 4px;
   }
 
   .gs-info-list {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 14px;
     overflow: hidden;
     margin-bottom: 20px;
   }
@@ -352,7 +361,7 @@ const css = `
   }
   .gs-info-row:last-child { border-bottom: none; }
   .gs-info-key {
-    color: #3A5570;
+    color: #8ea3bc;
     font-size: 13px;
   }
   .gs-info-val {
@@ -375,7 +384,7 @@ const css = `
     gap: 4px;
   }
   .gs-trust-icon { font-size: 18px; }
-  .gs-trust-label { color: #2A3F52; font-size: 10px; letter-spacing: 0.5px; }
+  .gs-trust-label { color: #7b91a8; font-size: 10px; letter-spacing: 0.5px; }
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }

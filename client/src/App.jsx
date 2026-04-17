@@ -10,27 +10,54 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
 
   .app-shell {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: #0B1628;
+    background:
+      radial-gradient(circle at top left, rgba(25,215,165,0.12), transparent 30%),
+      radial-gradient(circle at top right, rgba(79,140,255,0.14), transparent 28%),
+      linear-gradient(180deg, #060d18 0%, #081423 48%, #0a1728 100%);
     font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+  }
+
+  .app-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+    opacity: 0.55;
   }
 
   .app-content {
     flex: 1;
     overflow-y: auto;
+    padding: 0 10px 12px;
+    position: relative;
+    z-index: 1;
   }
 
   .app-topbar {
-    height: 60px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    background: #0D1E30;
+    height: 68px;
+    margin: 10px 10px 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(9, 18, 32, 0.76);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 20px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.24);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px;
+    padding: 0 14px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
   }
 
   .app-topbar-left {
@@ -39,10 +66,10 @@ const css = `
 
   .app-topbar-brand {
     color: #fff;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
-    letter-spacing: -0.2px;
-    margin-bottom: 1px;
+    letter-spacing: -0.35px;
+    margin-bottom: 2px;
   }
 
   .app-topbar-brand span {
@@ -50,7 +77,7 @@ const css = `
   }
 
   .app-topbar-sub {
-    color: #6D879F;
+    color: #93a8bc;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -64,40 +91,44 @@ const css = `
   }
 
   .app-top-btn {
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.02);
-    color: #9AB0C3;
-    border-radius: 10px;
-    padding: 7px 10px;
+    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.03);
+    color: #c7d4e4;
+    border-radius: 12px;
+    padding: 8px 11px;
     font-size: 11px;
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
   }
 
   .app-top-btn:hover {
     border-color: rgba(255,255,255,0.18);
     color: #fff;
+    background: rgba(255,255,255,0.06);
+    transform: translateY(-1px);
   }
 
   .app-top-icon-btn {
     width: 34px;
     height: 34px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.02);
-    color: #9AB0C3;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.03);
+    color: #c7d4e4;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     position: relative;
-    transition: border-color 0.2s, color 0.2s;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
   }
 
   .app-top-icon-btn:hover {
     border-color: rgba(255,255,255,0.18);
     color: #fff;
+    background: rgba(255,255,255,0.06);
+    transform: translateY(-1px);
   }
 
   .app-notif-dot {
@@ -120,17 +151,19 @@ const css = `
     right: 0;
     top: 42px;
     width: min(340px, calc(100vw - 24px));
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: linear-gradient(180deg, rgba(14,28,46,0.98) 0%, rgba(10,21,36,0.98) 100%);
-    box-shadow: 0 14px 38px rgba(0,0,0,0.42);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.09);
+    background: linear-gradient(180deg, rgba(16,27,45,0.96) 0%, rgba(9,18,32,0.98) 100%);
+    box-shadow: 0 20px 48px rgba(0,0,0,0.42);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 40;
     overflow: hidden;
   }
 
   .app-notif-head {
     padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
     color: #fff;
     font-size: 12px;
     font-weight: 600;
@@ -145,7 +178,7 @@ const css = `
   .app-notif-item {
     padding: 11px 12px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    color: #9FB2C6;
+    color: #afc0d2;
     font-size: 12px;
     line-height: 1.45;
   }
@@ -156,7 +189,7 @@ const css = `
 
   .app-notif-empty {
     padding: 20px 12px;
-    color: #6D879F;
+    color: #7f93a8;
     font-size: 12px;
     text-align: center;
   }
@@ -165,17 +198,18 @@ const css = `
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid rgba(0,200,150,0.25);
-    background: rgba(0,200,150,0.1);
-    color: #00C896;
+    border: 1px solid rgba(25,215,165,0.28);
+    background: linear-gradient(135deg, rgba(25,215,165,0.18), rgba(79,140,255,0.12));
+    color: #66f0c9;
     font-size: 13px;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
     overflow: hidden;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.16);
   }
 
   .app-top-avatar-img {
@@ -186,36 +220,49 @@ const css = `
   }
 
   .app-top-avatar:hover {
-    opacity: 0.9;
+    opacity: 0.92;
+    transform: translateY(-1px);
   }
 
   .app-nav {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    background: #0D1E30;
-    border-top: 1px solid rgba(255,255,255,0.07);
-    padding: 8px 8px 12px;
-    gap: 6px;
+    margin: 0 10px 10px;
+    background: rgba(9, 18, 32, 0.74);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.24);
+    padding: 8px;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
   }
 
   .app-nav-btn {
     border: none;
     background: transparent;
-    border-radius: 10px;
+    border-radius: 14px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    color: #8BAAB8;
-    padding: 6px 4px;
-    transition: background 0.2s, color 0.2s;
+    color: #91a7bc;
+    padding: 8px 4px;
+    transition: background 0.2s, color 0.2s, transform 0.2s;
   }
 
   .app-nav-btn.active {
-    color: #00C896;
-    background: rgba(0,200,150,0.08);
+    color: #19d7a5;
+    background: rgba(25,215,165,0.1);
+  }
+
+  .app-nav-btn:hover {
+    transform: translateY(-1px);
+    color: #fff;
   }
 
   .app-nav-icon {
