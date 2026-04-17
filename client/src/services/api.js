@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:5000/api';
+const BASE = 'https://gigshield-api-au7x.onrender.com/api';
 
 async function call(path, method = 'GET', body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
