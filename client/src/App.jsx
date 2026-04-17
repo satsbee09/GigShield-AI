@@ -6,6 +6,16 @@ import Policy from './pages/Policy';
 import Profile from './pages/Profile';
 import { getClaims, getPolicy } from './services/api';
 
+function getSavedThemeMode() {
+  const saved = localStorage.getItem('gigshield_theme_mode');
+  return saved === 'system' || saved === 'light' || saved === 'dark' ? saved : null;
+}
+
+function getSystemTheme() {
+  if (typeof window === 'undefined' || !window.matchMedia) return 'dark';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
 
@@ -106,6 +116,26 @@ const css = `
     border-color: rgba(255,255,255,0.18);
     color: #fff;
     background: rgba(255,255,255,0.06);
+    transform: translateY(-1px);
+  }
+
+  .app-theme-btn {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: #d4dfeb;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.2s;
+    white-space: nowrap;
+  }
+
+  .app-theme-btn:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
     transform: translateY(-1px);
   }
 
@@ -306,16 +336,122 @@ const css = `
     line-height: 1;
     letter-spacing: 0.2px;
   }
+
+  @media (min-width: 1024px) {
+    .app-shell {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      grid-template-rows: 78px minmax(0, 1fr);
+      grid-template-areas:
+        'nav topbar'
+        'nav content';
+      height: 100vh;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .app-topbar {
+      grid-area: topbar;
+      margin: 0;
+      border-radius: 16px;
+      height: 100%;
+      padding: 0 18px;
+    }
+
+    .app-content {
+      grid-area: content;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      background: rgba(8, 17, 31, 0.38);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow: auto;
+    }
+
+    .app-nav {
+      grid-area: nav;
+      margin: 0;
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    .app-nav-btn {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 10px;
+      width: 100%;
+      text-align: left;
+      padding: 11px 12px;
+      border-radius: 12px;
+    }
+
+    .app-nav-icon {
+      font-size: 16px;
+    }
+
+    .app-nav-label {
+      font-size: 12px;
+      line-height: 1.2;
+    }
+  }
 `;
 
 export default function App() {
   const [screen, setScreen] = useState('onboarding');
   const [worker, setWorker] = useState(null);
+  const [themeMode, setThemeMode] = useState(() => getSavedThemeMode() || 'system');
+  const [theme, setTheme] = useState(() => {
+    const mode = getSavedThemeMode();
+    if (!mode || mode === 'system') return getSystemTheme();
+    return mode;
+  });
   const [tab, setTab] = useState('dashboard');
   const [notifications, setNotifications] = useState([]);
   const [readNotifIds, setReadNotifIds] = useState({});
   const [notifOpen, setNotifOpen] = useState(false);
   const notifWrapRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('gigshield_theme_mode', themeMode);
+    if (themeMode === 'system') {
+      localStorage.removeItem('gigshield_theme');
+    } else {
+      localStorage.setItem('gigshield_theme', theme);
+    }
+    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+  }, [theme, themeMode]);
+
+  useEffect(() => {
+    if (themeMode === 'system') {
+      setTheme(getSystemTheme());
+      return;
+    }
+    setTheme(themeMode);
+  }, [themeMode]);
+
+  useEffect(() => {
+    if (themeMode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return;
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const applySystemTheme = (event) => setTheme(event.matches ? 'dark' : 'light');
+
+    setTheme(media.matches ? 'dark' : 'light');
+
+    if (media.addEventListener) {
+      media.addEventListener('change', applySystemTheme);
+      return () => media.removeEventListener('change', applySystemTheme);
+    }
+
+    media.addListener(applySystemTheme);
+    return () => media.removeListener(applySystemTheme);
+  }, [themeMode]);
 
   // Load user from localStorage
   useEffect(() => {
@@ -353,6 +489,18 @@ export default function App() {
   function onUpdateProfile(updatedWorker) {
     localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
     setWorker(updatedWorker);
+  }
+
+  function toggleTheme() {
+    document.body.classList.add('theme-transition');
+    window.setTimeout(() => {
+      document.body.classList.remove('theme-transition');
+    }, 320);
+    setThemeMode((prev) => {
+      if (prev === 'system') return 'dark';
+      if (prev === 'dark') return 'light';
+      return 'system';
+    });
   }
 
   // Main app (Dashboard + Tabs)
@@ -542,6 +690,9 @@ export default function App() {
           <div className="app-topbar-sub">{activeTabLabel}</div>
         </div>
         <div className="app-topbar-actions">
+          <button className="app-theme-btn" onClick={toggleTheme}>
+            {themeMode === 'system' ? '🖥 System' : themeMode === 'dark' ? '🌙 Dark' : '☀ Light'}
+          </button>
           <button className="app-top-btn" onClick={() => setScreen('policy')}>Policy</button>
           <div className="app-notif-wrap" ref={notifWrapRef}>
             <button className="app-top-icon-btn" onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
