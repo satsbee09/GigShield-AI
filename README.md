@@ -19,8 +19,12 @@ GigShield is AI-powered insurance for delivery workers. Auto-detects rain/pollut
 
 2. **Keys** (copy .env.example → .env)
    ```
+   # server/.env
    RAZORPAY_KEY_ID=rzp_test_... (razorpay.com dashboard → Test API Keys)
    OPENWEATHER_KEY=... (openweathermap.org/api → Sign up free)
+
+   # client/.env (optional override for frontend API target)
+   VITE_API_BASE=http://localhost:5000/api
    ```
 
 3. **Install & Run** (3 terminals)
@@ -32,16 +36,18 @@ GigShield is AI-powered insurance for delivery workers. Auto-detects rain/pollut
 
    # Terminal 2: Server + Mongo
    cd gigshield/server
+   cp .env.example .env
    npm install
    npm run dev    # port 5000, auto-reload
 
    # Terminal 3: Client
    cd gigshield/client
+   cp .env.example .env
    npm install
-   npm run dev    # port 3000
+   npm run dev    # Vite default: port 5173
    ```
 
-4. **Open http://localhost:3000** → Onboard → Buy Policy → Simulate
+4. **Open http://localhost:5173** → Onboard → Buy Policy → Simulate
 
 ## Demo Flow (Video Script)
 

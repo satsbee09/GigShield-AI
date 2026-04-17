@@ -1,4 +1,8 @@
-const BASE = 'https://gigshield-api-au7x.onrender.com/api';
+const BASE =
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.DEV
+    ? 'http://localhost:5000/api'
+    : 'https://gigshield-api-au7x.onrender.com/api');
 
 async function call(path, method = 'GET', body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
