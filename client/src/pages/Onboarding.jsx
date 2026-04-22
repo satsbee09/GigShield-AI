@@ -10,6 +10,7 @@ const ZONES = [
   { label: 'Noida',           value: 'noida',           lat: 28.5355, lon: 77.3910 },
 ];
 const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon'];
+const ONBOARDING_DRAFT_KEY = 'gigshield_onboarding_draft';
 const TIER_COLOR = { low: '#00E5A0', medium: '#FFB347', high: '#FF5C5C' };
 const TIER_BG    = { low: 'rgba(0,229,160,0.08)', medium: 'rgba(255,179,71,0.08)', high: 'rgba(255,92,92,0.08)' };
 
@@ -124,6 +125,32 @@ const css = `
     letter-spacing: 0.8px;
     text-transform: uppercase;
     margin-bottom: 7px;
+  }
+
+  .gs-draft {
+    border: 1px solid rgba(79,140,255,0.28);
+    background: rgba(79,140,255,0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: #b9d5ff;
+    font-size: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .gs-draft-btn {
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: #eef6ff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    padding: 5px 10px;
+    cursor: pointer;
   }
 
   .gs-phone-row {
@@ -411,12 +438,59 @@ export default function Onboarding({ onComplete }) {
   const [step,    setStep]    = useState(1);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
+  const [hasDraft, setHasDraft] = useState(false);
   const [form,    setForm]    = useState({
     phone: '', otp: '', demoOtp: '', name: '',
     platform: 'Zomato', zone: 'laxmi_nagar', avgDailyIncome: 800
   });
   const [worker, setWorker] = useState(null);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ONBOARDING_DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== 'object') return;
+      setHasDraft(true);
+      if (draft.autoLoad) {
+        setForm((prev) => ({ ...prev, ...draft.form }));
+        setStep(draft.step || 1);
+      }
+    } catch {
+      // ignore corrupted draft
+    }
+  }, []);
+
+  useEffect(() => {
+    const payload = {
+      step,
+      form,
+      autoLoad: false,
+      ts: Date.now(),
+    };
+    localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(payload));
+  }, [step, form]);
+
+  function resumeDraft() {
+    try {
+      const raw = localStorage.getItem(ONBOARDING_DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== 'object') return;
+      setForm((prev) => ({ ...prev, ...(draft.form || {}) }));
+      setStep(draft.step || 1);
+      setError('');
+      setHasDraft(false);
+    } catch {
+      // ignore corrupted draft
+    }
+  }
+
+  function clearDraft() {
+    localStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    setHasDraft(false);
+  }
 
   async function handleSendOTP() {
     if (form.phone.length !== 10) return setError('Enter a valid 10-digit number');
@@ -468,6 +542,13 @@ export default function Onboarding({ onComplete }) {
             <div className="gs-animate">
               <h1 className="gs-heading">Your income,<br />protected.</h1>
               <p className="gs-subheading">Enter your mobile number to get started.</p>
+
+              {hasDraft && (
+                <div className="gs-draft">
+                  <span>You have a saved setup draft.</span>
+                  <button className="gs-draft-btn" onClick={resumeDraft}>Resume</button>
+                </div>
+              )}
 
               <label className="gs-label">Mobile number</label>
               <div className="gs-phone-row">
@@ -616,8 +697,11 @@ export default function Onboarding({ onComplete }) {
                 ))}
               </div>
 
-              <button className="gs-btn" onClick={() => onComplete(worker)}>
+              <button className="gs-btn" onClick={() => { clearDraft(); onComplete(worker); }}>
                 Buy This Week's Plan →
+              </button>
+              <button className="gs-link-btn" onClick={clearDraft}>
+                Clear saved draft
               </button>
             </div>
           )}

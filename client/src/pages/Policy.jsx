@@ -175,6 +175,52 @@ const css = `
   .pl-covered-icon { font-size: 15px; }
   .pl-covered-text { color: #a2b5c8; font-size: 13px; }
 
+  .pl-forecast {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    margin-bottom: 18px;
+    padding: 12px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .pl-forecast-title {
+    color: #8ea3bc;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pl-forecast-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .pl-forecast-item {
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    padding: 10px;
+  }
+
+  .pl-forecast-k {
+    color: #8ea3bc;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .pl-forecast-v {
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    letter-spacing: -0.4px;
+  }
+
   /* ── Buttons ── */
   .pl-btn-primary {
     width: 100%;
@@ -329,6 +375,9 @@ export default function Policy({ worker, onSuccess, onBack }) {
   const tier     = worker?.premiumTier || 'high';
   const color    = TIER_COLOR[tier];
   const coverage = COVERAGE[tier] || 600;
+  const monthlyPremium = (worker?.weeklyPremium || 0) * 4;
+  const disruptionDays = tier === 'high' ? 10 : tier === 'medium' ? 7 : 4;
+  const potentialCovered = coverage * disruptionDays;
 
   const buyPolicy = async () => {
     setLoading(true);
@@ -487,6 +536,20 @@ export default function Policy({ worker, onSuccess, onBack }) {
                 <span className="pl-covered-text">{text}</span>
               </div>
             ))}
+          </div>
+
+          <div className="pl-forecast pl-animate-3">
+            <div className="pl-forecast-title">Protection forecast</div>
+            <div className="pl-forecast-grid">
+              <div className="pl-forecast-item">
+                <div className="pl-forecast-k">Projected monthly premium</div>
+                <div className="pl-forecast-v">₹{monthlyPremium}</div>
+              </div>
+              <div className="pl-forecast-item">
+                <div className="pl-forecast-k">Potential covered value</div>
+                <div className="pl-forecast-v">₹{potentialCovered}</div>
+              </div>
+            </div>
           </div>
 
           {/* CTA */}

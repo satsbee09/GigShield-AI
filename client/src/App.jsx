@@ -100,6 +100,25 @@ const css = `
     flex-shrink: 0;
   }
 
+  .app-quick-btn {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: #c7d4e4;
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
+  }
+
+  .app-quick-btn:hover {
+    border-color: rgba(255,255,255,0.2);
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+  }
+
   .app-top-btn {
     border: 1px solid rgba(255,255,255,0.09);
     background: rgba(255,255,255,0.03);
@@ -316,6 +335,86 @@ const css = `
     transition: background 0.2s, color 0.2s, transform 0.2s;
   }
 
+  .app-nav-head {
+    display: none;
+  }
+
+  .app-kbd {
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.06);
+    color: #d6e2ef;
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-size: 10px;
+    line-height: 1.4;
+    margin-left: 6px;
+  }
+
+  .app-command-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    background: rgba(2, 9, 18, 0.66);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 72px 18px 18px;
+  }
+
+  .app-command {
+    width: min(640px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(180deg, rgba(12,24,40,0.95) 0%, rgba(7,15,27,0.98) 100%);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+
+  .app-command-input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: transparent;
+    color: #eaf2fb;
+    padding: 14px 16px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .app-command-list {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .app-command-item {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 11px;
+    background: rgba(255,255,255,0.03);
+    color: #cad8e7;
+    padding: 10px 11px;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+  }
+
+  .app-command-item:hover {
+    border-color: rgba(25,215,165,0.3);
+    background: rgba(25,215,165,0.08);
+    color: #f3f8ff;
+  }
+
+  .app-command-empty {
+    color: #8ca0b6;
+    font-size: 12px;
+    text-align: center;
+    padding: 14px 10px 16px;
+  }
+
   .app-nav-btn.active {
     color: #19d7a5;
     background: rgba(25,215,165,0.1);
@@ -392,6 +491,28 @@ const css = `
     }
 
     .app-nav-icon {
+
+    .app-nav-head {
+      display: block;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .app-nav-title {
+      color: #eff6ff;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      letter-spacing: -0.2px;
+    }
+
+    .app-nav-sub {
+      color: #8da2b7;
+      font-size: 11px;
+    }
       font-size: 16px;
     }
 
@@ -415,7 +536,10 @@ export default function App() {
   const [notifications, setNotifications] = useState([]);
   const [readNotifIds, setReadNotifIds] = useState({});
   const [notifOpen, setNotifOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickQuery, setQuickQuery] = useState('');
   const notifWrapRef = useRef(null);
+  const quickInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('gigshield_theme_mode', themeMode);
@@ -502,6 +626,44 @@ export default function App() {
       return 'system';
     });
   }
+
+  const quickActions = [
+    { id: 'qa-home', label: 'Go to Dashboard', run: () => setTab('dashboard') },
+    { id: 'qa-claims', label: 'Open Claims', run: () => setTab('claims') },
+    { id: 'qa-profile', label: 'Open Profile', run: () => setTab('profile') },
+    { id: 'qa-policy', label: 'Open Policy Purchase', run: () => setScreen('policy') },
+    { id: 'qa-theme', label: 'Cycle Theme Mode', run: toggleTheme },
+    { id: 'qa-logout', label: 'Sign Out', run: onLogout },
+  ];
+
+  const filteredQuickActions = quickActions.filter((action) =>
+    action.label.toLowerCase().includes(quickQuery.trim().toLowerCase())
+  );
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      const isQuickShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+      if (isQuickShortcut) {
+        event.preventDefault();
+        setQuickOpen(true);
+        return;
+      }
+      if (event.key === 'Escape') {
+        setQuickOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!quickOpen) {
+      setQuickQuery('');
+      return;
+    }
+    window.setTimeout(() => quickInputRef.current?.focus(), 0);
+  }, [quickOpen]);
 
   // Main app (Dashboard + Tabs)
   const tabs = [
@@ -690,6 +852,9 @@ export default function App() {
           <div className="app-topbar-sub">{activeTabLabel}</div>
         </div>
         <div className="app-topbar-actions">
+          <button className="app-quick-btn" onClick={() => setQuickOpen(true)}>
+            Quick actions <span className="app-kbd">Ctrl K</span>
+          </button>
           <button className="app-theme-btn" onClick={toggleTheme}>
             {themeMode === 'system' ? '🖥 System' : themeMode === 'dark' ? '🌙 Dark' : '☀ Light'}
           </button>
@@ -759,6 +924,10 @@ export default function App() {
       </div>
 
       <div className="app-nav">
+        <div className="app-nav-head">
+          <div className="app-nav-title">Operations Console</div>
+          <div className="app-nav-sub">Protection intelligence for gig workers</div>
+        </div>
         {tabs.map((tabItem) => (
           <button
             key={tabItem.id}
@@ -770,6 +939,38 @@ export default function App() {
           </button>
         ))}
       </div>
+
+      {quickOpen && (
+        <div className="app-command-backdrop" onClick={() => setQuickOpen(false)}>
+          <div className="app-command" onClick={(event) => event.stopPropagation()}>
+            <input
+              ref={quickInputRef}
+              className="app-command-input"
+              placeholder="Search actions..."
+              value={quickQuery}
+              onChange={(event) => setQuickQuery(event.target.value)}
+            />
+            <div className="app-command-list">
+              {filteredQuickActions.length === 0 ? (
+                <div className="app-command-empty">No matching actions.</div>
+              ) : (
+                filteredQuickActions.map((action) => (
+                  <button
+                    key={action.id}
+                    className="app-command-item"
+                    onClick={() => {
+                      action.run();
+                      setQuickOpen(false);
+                    }}
+                  >
+                    {action.label}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
