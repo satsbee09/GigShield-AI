@@ -1,12 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getClaims } from '../services/api';
-
-const FILTERS = [
-  { id: 'all', label: 'All claims' },
-  { id: 'processing', label: 'In review' },
-  { id: 'paid', label: 'Paid' },
-  { id: 'rejected', label: 'Rejected' },
-];
+import { getText } from '../i18n';
 
 function getStatusTone(status) {
   if (status === 'paid') return 'success';
@@ -263,7 +257,7 @@ const css = `
   }
 `;
 
-export default function Claims({ worker }) {
+export default function Claims({ worker, language = 'en' }) {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -330,10 +324,17 @@ export default function Claims({ worker }) {
     return (
       <>
         <style>{css}</style>
-        <div className="cl-loading">Loading claims log…</div>
+        <div className="cl-loading">{getText(language, 'claims.loading')}</div>
       </>
     );
   }
+
+  const filters = [
+    { id: 'all', label: getText(language, 'claims.all') },
+    { id: 'processing', label: getText(language, 'claims.processing') },
+    { id: 'paid', label: getText(language, 'claims.paid') },
+    { id: 'rejected', label: getText(language, 'claims.rejected') },
+  ];
 
   return (
     <>
@@ -343,26 +344,24 @@ export default function Claims({ worker }) {
           <section className="cl-hero">
             <div>
               <div className="cl-kicker">Claims desk</div>
-              <h1 className="cl-title">A cleaner payout timeline.</h1>
-              <p className="cl-lead">
-                Every triggered disruption lands here with a readable status trail, export option, and quick filtering so the page feels operational instead of ornamental.
-              </p>
+              <h1 className="cl-title">{getText(language, 'claims.title')}</h1>
+              <p className="cl-lead">{getText(language, 'claims.lead')}</p>
             </div>
             <div className="cl-summary">
               <div className="cl-summary-card">
-                <div className="cl-card-kicker">Total claims</div>
+                <div className="cl-card-kicker">{getText(language, 'claims.totalClaims')}</div>
                 <div className="cl-summary-value">{claims.length}</div>
-                <div className="cl-summary-copy">Auto-generated records.</div>
+                <div className="cl-summary-copy">{getText(language, 'claims.totalCopy')}</div>
               </div>
               <div className="cl-summary-card">
-                <div className="cl-card-kicker">Paid out</div>
+                <div className="cl-card-kicker">{getText(language, 'claims.paidOut')}</div>
                 <div className="cl-summary-value">₹{totalPaid.toLocaleString('en-IN')}</div>
-                <div className="cl-summary-copy">Total credited so far.</div>
+                <div className="cl-summary-copy">{getText(language, 'claims.receivedCopy')}</div>
               </div>
               <div className="cl-summary-card">
-                <div className="cl-card-kicker">In review</div>
+                <div className="cl-card-kicker">{getText(language, 'claims.inReview')}</div>
                 <div className="cl-summary-value">{pendingClaims.length}</div>
-                <div className="cl-summary-copy">Awaiting final verification.</div>
+                <div className="cl-summary-copy">{getText(language, 'claims.reviewCopy')}</div>
               </div>
             </div>
           </section>
@@ -370,23 +369,23 @@ export default function Claims({ worker }) {
           <section className="cl-panel">
             <div className="cl-panel-head">
               <div>
-                <div className="cl-kicker">Controls</div>
-                <div className="cl-panel-title">Filter and export</div>
+                <div className="cl-kicker">{getText(language, 'claims.controls')}</div>
+                <div className="cl-panel-title">{getText(language, 'claims.filterExport')}</div>
               </div>
               <button className="cl-export-btn" onClick={handleExportCsv} disabled={filteredClaims.length === 0}>
-                Export CSV
+                {getText(language, 'claims.exportCsv')}
               </button>
             </div>
 
             <div className="cl-controls">
               <input
                 className="cl-search"
-                placeholder="Search by trigger type"
+                placeholder={getText(language, 'claims.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
               <div className="cl-filter-row">
-                {FILTERS.map((filter) => (
+                {filters.map((filter) => (
                   <button
                     key={filter.id}
                     className={`cl-chip ${activeFilter === filter.id ? 'active' : ''}`}
@@ -397,7 +396,7 @@ export default function Claims({ worker }) {
                 ))}
               </div>
               <div className="cl-results">
-                Showing {filteredClaims.length} of {claims.length} claims. {paidClaims.length} paid, {pendingClaims.length} in review, {rejectedClaims.length} rejected.
+                {getText(language, 'claims.resultsLine', { shown: filteredClaims.length, total: claims.length, paid: paidClaims.length, review: pendingClaims.length, rejected: rejectedClaims.length })}
               </div>
             </div>
           </section>
@@ -405,15 +404,15 @@ export default function Claims({ worker }) {
           <section className="cl-list">
             <div className="cl-list-head">
               <div>
-                <div className="cl-kicker">Timeline</div>
-                <div className="cl-list-title">Claim activity</div>
+                <div className="cl-kicker">{getText(language, 'claims.timeline')}</div>
+                <div className="cl-list-title">{getText(language, 'claims.claimActivity')}</div>
               </div>
             </div>
 
             {claims.length === 0 ? (
-              <div className="cl-empty">No claims yet. When a disruption crosses the payout threshold, it will appear here automatically.</div>
+              <div className="cl-empty">{getText(language, 'claims.emptyAll')}</div>
             ) : filteredClaims.length === 0 ? (
-              <div className="cl-empty">No claims match the current filters.</div>
+              <div className="cl-empty">{getText(language, 'claims.emptyFiltered')}</div>
             ) : (
               <div className="cl-claim-list">
                 {filteredClaims.map((claim, index) => {
@@ -439,9 +438,9 @@ export default function Claims({ worker }) {
 
                       <div className="cl-claim-bottom">
                         <div className="cl-claim-note">
-                          {status === 'paid' && 'This payout has been approved and credited.'}
-                          {status === 'rejected' && 'This disruption did not meet the payout conditions.'}
-                          {status !== 'paid' && status !== 'rejected' && 'Verification is still running against live disruption data.'}
+                          {status === 'paid' && getText(language, 'claims.paidText')}
+                          {status === 'rejected' && getText(language, 'claims.rejectedText')}
+                          {status !== 'paid' && status !== 'rejected' && getText(language, 'claims.reviewText')}
                         </div>
                         <div className="cl-claim-amount">
                           {status === 'paid' ? `+₹${claim.payoutAmount || 0}` : claim.payoutPercent ? `${claim.payoutPercent}%` : 'Pending'}

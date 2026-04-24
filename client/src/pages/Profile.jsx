@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { getText, LANGUAGES } from '../i18n';
 
-const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon'];
+const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon', 'Flipkart', 'Blinkit', 'BigBasket', 'Myntra', 'Dunzo', 'Porter'];
 const ZONES = [
   { label: 'Laxmi Nagar', value: 'laxmi_nagar', lat: 28.6273, lon: 77.2773 },
   { label: 'Yamuna Bank', value: 'yamuna_bank', lat: 28.62, lon: 77.29 },
@@ -334,7 +335,7 @@ const css = `
   }
 `;
 
-export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfile }) {
+export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfile, language = 'en', onLanguageChange }) {
   const zoneName = worker?.zone?.replace(/_/g, ' ') || 'Not set';
   const preferences = worker?.preferences || {};
   const operations = worker?.operations || {};
@@ -379,11 +380,11 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file.');
+      setError(getText(language, 'profile.chooseImage'));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setError('Image should be under 2MB.');
+      setError(getText(language, 'profile.imageSmall'));
       return;
     }
     const reader = new FileReader();
@@ -400,17 +401,17 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
     const emergencyContact = form.emergencyContact.trim();
 
     if (!name) {
-      setError('Name is required.');
+      setError(getText(language, 'profile.nameRequired'));
       return;
     }
 
     if (!/^\d{10}$/.test(phone)) {
-      setError('Enter a valid 10-digit phone number.');
+      setError(getText(language, 'profile.phoneValid'));
       return;
     }
 
     if (emergencyContact && !/^\d{10}$/.test(emergencyContact)) {
-      setError('Emergency contact should be a valid 10-digit number.');
+      setError(getText(language, 'profile.emergencyValid'));
       return;
     }
 
@@ -439,14 +440,14 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
     setError('');
     setIsEditing(false);
-    setToastMessage('Profile and preferences saved');
+    setToastMessage(getText(language, 'profile.savedFull'));
     setShowToast(true);
   }
 
   function handleCopySupportEmail() {
     const supportEmail = 'support@gigshield.ai';
     navigator.clipboard?.writeText(supportEmail).catch(() => {});
-    setToastMessage('Support email copied');
+    setToastMessage(getText(language, 'profile.supportEmailCopied'));
     setShowToast(true);
   }
 
@@ -457,11 +458,9 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
         <div className="pf-stack">
           <section className="pf-hero">
             <div>
-              <div className="pf-kicker">Profile studio</div>
-              <h1 className="pf-title">Account settings that actually affect the workspace.</h1>
-              <p className="pf-lead">
-                This section now does more than edit basic identity. You can control payout setup, alert behavior, and refresh preferences so the app feels like a working operations product.
-              </p>
+              <div className="pf-kicker">{getText(language, 'app.profileTitle')}</div>
+              <h1 className="pf-title">{getText(language, 'profile.title')}</h1>
+              <p className="pf-lead">{getText(language, 'profile.lead')}</p>
             </div>
 
             <div className="pf-card" style={{ boxShadow: 'none', margin: 0 }}>
@@ -470,7 +469,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                   {worker?.profileImage ? <img src={worker.profileImage} alt="Profile" /> : worker?.name?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div>
-                  <div className="pf-card-kicker">Member</div>
+                  <div className="pf-card-kicker">{getText(language, 'profile.member')}</div>
                   <div className="pf-name">{worker?.name || 'Worker'}</div>
                   <div className="pf-sub">+91 {worker?.phone} • {worker?.platform}</div>
                 </div>
@@ -478,12 +477,12 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
               <div className="pf-chip-grid">
                 <div className="pf-chip">
-                  <div className="pf-card-kicker">Payout method</div>
+                  <div className="pf-card-kicker">{getText(language, 'profile.payoutMethod')}</div>
                   <div className="pf-chip-value">{operations.payoutMethod || 'UPI'}</div>
                   <div className="pf-chip-copy">Current payout destination type.</div>
                 </div>
                 <div className="pf-chip">
-                  <div className="pf-card-kicker">Alerts mode</div>
+                  <div className="pf-card-kicker">{getText(language, 'profile.alertsMode')}</div>
                   <div className="pf-chip-value">{preferences.notificationMode || 'all'}</div>
                   <div className="pf-chip-copy">How much activity you want surfaced.</div>
                 </div>
@@ -494,37 +493,37 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
           <section className="pf-grid">
             <div className="pf-card">
               <div className="pf-kicker">Account</div>
-              <div className="pf-card-title">{isEditing ? 'Edit profile and preferences' : 'Identity and operations setup'}</div>
+              <div className="pf-card-title">{isEditing ? getText(language, 'profile.editTitle') : getText(language, 'profile.identity')}</div>
 
               {!isEditing ? (
                 <>
                   <div className="pf-row">
                     <div>
-                      <div className="pf-row-title">Work zone</div>
-                      <div className="pf-row-copy">Current monitoring region for risk and claims.</div>
+                      <div className="pf-row-title">{getText(language, 'profile.workZone')}</div>
+                      <div className="pf-row-copy">{getText(language, 'profile.zoneCopy')}</div>
                     </div>
                     <div className="pf-row-value">{zoneName}</div>
                   </div>
                   <div className="pf-row">
                     <div>
-                      <div className="pf-row-title">Platform</div>
-                      <div className="pf-row-copy">Used for payout planning and account context.</div>
+                      <div className="pf-row-title">{getText(language, 'profile.platform')}</div>
+                      <div className="pf-row-copy">{getText(language, 'profile.platformCopy')}</div>
                     </div>
                     <div className="pf-row-value">{worker?.platform || '-'}</div>
                   </div>
                   <div className="pf-row">
                     <div>
-                      <div className="pf-row-title">Emergency contact</div>
-                      <div className="pf-row-copy">Visible inside your operations profile for support and safety workflows.</div>
+                      <div className="pf-row-title">{getText(language, 'profile.emergency')}</div>
+                      <div className="pf-row-copy">{getText(language, 'profile.emergencyCopy')}</div>
                     </div>
-                    <div className="pf-row-value">{operations.emergencyContact ? `+91 ${operations.emergencyContact}` : 'Not added'}</div>
+                    <div className="pf-row-value">{operations.emergencyContact ? `+91 ${operations.emergencyContact}` : getText(language, 'profile.notAdded')}</div>
                   </div>
                   <div className="pf-row">
                     <div>
-                      <div className="pf-row-title">Auto refresh</div>
-                      <div className="pf-row-copy">Controls live sync polling across the workspace.</div>
+                      <div className="pf-row-title">{getText(language, 'profile.autoRefresh')}</div>
+                      <div className="pf-row-copy">{getText(language, 'profile.autoRefreshCopy')}</div>
                     </div>
-                    <div className="pf-row-value">{preferences.autoRefresh === false ? 'Off' : 'On'}</div>
+                    <div className="pf-row-value">{preferences.autoRefresh === false ? getText(language, 'app.off') : getText(language, 'app.on')}</div>
                   </div>
                 </>
               ) : (
@@ -533,10 +532,10 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                     <div className="pf-avatar">
                       {form.profileImage ? <img src={form.profileImage} alt="Preview" /> : form.name?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <label className="pf-photo-btn" htmlFor="profile-photo-input">Upload photo</label>
+                    <label className="pf-photo-btn" htmlFor="profile-photo-input">{getText(language, 'profile.uploadPhoto')}</label>
                     {form.profileImage && (
                       <button className="pf-photo-remove" onClick={() => setForm((prev) => ({ ...prev, profileImage: '' }))}>
-                        Remove
+                        {getText(language, 'profile.remove')}
                       </button>
                     )}
                     <input
@@ -550,24 +549,24 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
                   <div className="pf-two-up">
                     <div className="pf-field">
-                      <label className="pf-label">Full name</label>
+                      <label className="pf-label">{getText(language, 'profile.fullName')}</label>
                       <input className="pf-input" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
                     </div>
                     <div className="pf-field">
-                      <label className="pf-label">Phone number</label>
+                      <label className="pf-label">{getText(language, 'profile.phone')}</label>
                       <input className="pf-input" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, '').slice(0, 10) }))} />
                     </div>
                   </div>
 
                   <div className="pf-two-up">
                     <div className="pf-field">
-                      <label className="pf-label">Platform</label>
+                      <label className="pf-label">{getText(language, 'profile.platform')}</label>
                       <select className="pf-select" value={form.platform} onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))}>
                         {PLATFORMS.map((platform) => <option key={platform} value={platform}>{platform}</option>)}
                       </select>
                     </div>
                     <div className="pf-field">
-                      <label className="pf-label">Zone</label>
+                      <label className="pf-label">{getText(language, 'profile.workZone')}</label>
                       <select className="pf-select" value={form.zone} onChange={(event) => setForm((prev) => ({ ...prev, zone: event.target.value }))}>
                         {ZONES.map((zone) => <option key={zone.value} value={zone.value}>{zone.label}</option>)}
                       </select>
@@ -576,11 +575,11 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
                   <div className="pf-two-up">
                     <div className="pf-field">
-                      <label className="pf-label">Emergency contact</label>
+                      <label className="pf-label">{getText(language, 'profile.emergency')}</label>
                       <input className="pf-input" value={form.emergencyContact} onChange={(event) => setForm((prev) => ({ ...prev, emergencyContact: event.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="10-digit number" />
                     </div>
                     <div className="pf-field">
-                      <label className="pf-label">Payout method</label>
+                      <label className="pf-label">{getText(language, 'profile.payoutMethod')}</label>
                       <select className="pf-select" value={form.payoutMethod} onChange={(event) => setForm((prev) => ({ ...prev, payoutMethod: event.target.value }))}>
                         {PAYOUT_METHODS.map((item) => <option key={item} value={item}>{item}</option>)}
                       </select>
@@ -589,25 +588,42 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
                   <div className="pf-two-up">
                     <div className="pf-field">
-                      <label className="pf-label">Alerts mode</label>
+                      <label className="pf-label">{getText(language, 'profile.alertsMode')}</label>
                       <select className="pf-select" value={form.notificationMode} onChange={(event) => setForm((prev) => ({ ...prev, notificationMode: event.target.value }))}>
-                        {NOTIFICATION_MODES.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
+                        {NOTIFICATION_MODES.map((mode) => (
+                          <option key={mode.value} value={mode.value}>
+                            {mode.value === 'all'
+                              ? getText(language, 'profile.allUpdates')
+                              : mode.value === 'critical'
+                                ? getText(language, 'profile.criticalOnly')
+                                : getText(language, 'profile.mostlyMuted')}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div className="pf-field">
-                      <label className="pf-label">Auto refresh</label>
+                      <label className="pf-label">{getText(language, 'profile.autoRefresh')}</label>
                       <select className="pf-select" value={form.autoRefresh ? 'on' : 'off'} onChange={(event) => setForm((prev) => ({ ...prev, autoRefresh: event.target.value === 'on' }))}>
-                        <option value="on">On</option>
-                        <option value="off">Off</option>
+                        <option value="on">{getText(language, 'app.on')}</option>
+                        <option value="off">{getText(language, 'app.off')}</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="pf-field">
+                    <label className="pf-label">{getText(language, 'app.language')}</label>
+                    <select className="pf-select" value={language} onChange={(event) => onLanguageChange?.(event.target.value)}>
+                      {LANGUAGES.map((item) => (
+                        <option key={item.code} value={item.code}>{item.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {error && <div className="pf-error">{error}</div>}
 
                   <div className="pf-actions">
-                    <button className="pf-btn-primary" onClick={handleSaveProfile}>Save profile</button>
-                    <button className="pf-btn" onClick={() => { setIsEditing(false); setError(''); }}>Cancel</button>
+                    <button className="pf-btn-primary" onClick={handleSaveProfile}>{getText(language, 'profile.save')}</button>
+                    <button className="pf-btn" onClick={() => { setIsEditing(false); setError(''); }}>{getText(language, 'profile.cancel')}</button>
                   </div>
                 </div>
               )}
@@ -615,41 +631,41 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
             <div className="pf-stack">
               <div className="pf-card">
-                <div className="pf-kicker">Features</div>
-                <div className="pf-card-title">Operations preferences</div>
+                <div className="pf-kicker">{getText(language, 'profile.features')}</div>
+                <div className="pf-card-title">{getText(language, 'profile.operationsPreferences')}</div>
                 <div className="pf-row">
                   <div>
-                    <div className="pf-row-title">Payout setup</div>
-                    <div className="pf-row-copy">Selected destination for future payout handling in the product flow.</div>
+                    <div className="pf-row-title">{getText(language, 'profile.payoutMethod')}</div>
+                    <div className="pf-row-copy">{getText(language, 'profile.payoutCopy')}</div>
                   </div>
                   <div className="pf-row-value">{operations.payoutMethod || 'UPI'}</div>
                 </div>
                 <div className="pf-row">
                   <div>
-                    <div className="pf-row-title">Alert filtering</div>
-                    <div className="pf-row-copy">Controls whether you see all updates or only the important ones.</div>
+                    <div className="pf-row-title">{getText(language, 'profile.alertsMode')}</div>
+                    <div className="pf-row-copy">{getText(language, 'profile.alertCopy')}</div>
                   </div>
                   <div className="pf-row-value">{preferences.notificationMode || 'all'}</div>
                 </div>
                 <div className="pf-row">
                   <div>
-                    <div className="pf-row-title">Refresh control</div>
-                    <div className="pf-row-copy">Turning this off pauses recurring workspace sync checks.</div>
+                    <div className="pf-row-title">{getText(language, 'profile.autoRefresh')}</div>
+                    <div className="pf-row-copy">{getText(language, 'profile.autoRefreshCopy')}</div>
                   </div>
-                  <div className="pf-row-value">{preferences.autoRefresh === false ? 'Paused' : 'Live'}</div>
+                  <div className="pf-row-value">{preferences.autoRefresh === false ? getText(language, 'profile.refreshPaused') : getText(language, 'profile.refreshLive')}</div>
                 </div>
               </div>
 
               <div className="pf-card">
-                <div className="pf-kicker">Actions</div>
-                <div className="pf-card-title">Workspace controls</div>
+                <div className="pf-kicker">{getText(language, 'profile.actions')}</div>
+                <div className="pf-card-title">{getText(language, 'profile.actions')}</div>
                 <div className="pf-actions">
                   <button className="pf-btn-primary" onClick={() => setIsEditing(true)}>
-                    {isEditing ? 'Editing active' : 'Edit settings'}
+                    {isEditing ? getText(language, 'profile.editingActive') : getText(language, 'profile.editSettings')}
                   </button>
-                  <button className="pf-btn" onClick={onOpenPolicy}>Open policy studio</button>
-                  <button className="pf-btn" onClick={() => setHelpOpen(true)}>Help and support</button>
-                  <button className="pf-btn-danger" onClick={onLogout}>Sign out</button>
+                  <button className="pf-btn" onClick={onOpenPolicy}>{getText(language, 'profile.openPolicy')}</button>
+                  <button className="pf-btn" onClick={() => setHelpOpen(true)}>{getText(language, 'profile.help')}</button>
+                  <button className="pf-btn-danger" onClick={onLogout}>{getText(language, 'profile.signOut')}</button>
                 </div>
               </div>
             </div>
@@ -660,19 +676,17 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       {helpOpen && (
         <div className="pf-help-backdrop" onClick={() => setHelpOpen(false)}>
           <div className="pf-help-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="pf-kicker">Support</div>
-            <div className="pf-help-title">Quick checks before raising a ticket</div>
-            <p className="pf-help-text">
-              These are the most common causes of confusing payout behavior in the demo environment.
-            </p>
+            <div className="pf-kicker">{getText(language, 'profile.help')}</div>
+            <div className="pf-help-title">{getText(language, 'profile.supportTitle')}</div>
+            <p className="pf-help-text">{getText(language, 'profile.supportText')}</p>
             <ul className="pf-help-list">
-              <li className="pf-help-item">Make sure the backend and AI engine are both running before you test disruptions.</li>
-              <li className="pf-help-item">Keep your work zone updated so location-based claim triggers stay aligned.</li>
-              <li className="pf-help-item">If auto refresh is turned off, use manual sync in the top bar to refresh workspace status.</li>
+              <li className="pf-help-item">{getText(language, 'profile.supportOne')}</li>
+              <li className="pf-help-item">{getText(language, 'profile.supportTwo')}</li>
+              <li className="pf-help-item">{getText(language, 'profile.supportThree')}</li>
             </ul>
             <div className="pf-actions" style={{ marginTop: 16 }}>
-              <button className="pf-btn-primary" onClick={handleCopySupportEmail}>Copy support email</button>
-              <button className="pf-btn" onClick={() => setHelpOpen(false)}>Close</button>
+              <button className="pf-btn-primary" onClick={handleCopySupportEmail}>{getText(language, 'profile.copyEmail')}</button>
+              <button className="pf-btn" onClick={() => setHelpOpen(false)}>{getText(language, 'profile.close')}</button>
             </div>
           </div>
         </div>

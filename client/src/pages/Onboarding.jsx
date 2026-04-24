@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { sendOTP, verifyOTP } from '../services/api';
+import { getText, LANGUAGES } from '../i18n';
 
 const ZONES = [
   { label: 'Laxmi Nagar', value: 'laxmi_nagar', lat: 28.6273, lon: 77.2773 },
@@ -10,7 +11,7 @@ const ZONES = [
   { label: 'Noida', value: 'noida', lat: 28.5355, lon: 77.391 },
 ];
 
-const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon'];
+const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon', 'Flipkart', 'Blinkit', 'BigBasket', 'Myntra', 'Dunzo', 'Porter'];
 const ONBOARDING_DRAFT_KEY = 'gigshield_onboarding_draft';
 
 const css = `
@@ -352,7 +353,7 @@ function Progress({ step }) {
   );
 }
 
-export default function Onboarding({ onComplete }) {
+export default function Onboarding({ onComplete, language = 'en', onLanguageChange }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -419,7 +420,7 @@ export default function Onboarding({ onComplete }) {
 
   async function handleSendOTP() {
     if (form.phone.length !== 10) {
-      setError('Enter a valid 10-digit number.');
+      setError(getText(language, 'onboarding.numberValid'));
       return;
     }
     setLoading(true);
@@ -437,7 +438,7 @@ export default function Onboarding({ onComplete }) {
 
   async function handleVerify() {
     if (form.otp.length !== 6) {
-      setError('Enter the 6-digit OTP.');
+      setError(getText(language, 'onboarding.otpValid'));
       return;
     }
 
@@ -479,30 +480,41 @@ export default function Onboarding({ onComplete }) {
               <div className="gs-mark-badge">GS</div>
               <div>
                 <div className="gs-mark-title">GigShield</div>
-                <div className="gs-mark-sub">Weekly protection for field workers</div>
+                <div className="gs-mark-sub">{getText(language, 'app.brandSub')}</div>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+              <select
+                className="gs-select"
+                style={{ maxWidth: 180, marginBottom: 0 }}
+                value={language}
+                onChange={(event) => onLanguageChange?.(event.target.value)}
+              >
+                {LANGUAGES.map((item) => (
+                  <option key={item.code} value={item.code}>{item.label}</option>
+                ))}
+              </select>
             </div>
 
             <Progress step={step} />
 
             {step === 1 && (
               <>
-                <div className="gs-kicker">Step 1</div>
-                <h1 className="gs-title">Start with your working number.</h1>
-                <p className="gs-lead">
-                  The first screen now feels more like a product intake than a hackathon landing page. We keep the flow short, but the visual system is tighter and the preview updates as you enter details.
-                </p>
+                <div className="gs-kicker">1 / 3</div>
+                <h1 className="gs-title">{getText(language, 'onboarding.title1')}</h1>
+                <p className="gs-lead">{getText(language, 'onboarding.lead1')}</p>
 
                 {hasDraft && (
                   <div className="gs-draft">
-                    <div className="gs-draft-copy">There’s a saved onboarding draft from an earlier session.</div>
-                    <button className="gs-draft-btn" onClick={resumeDraft}>Resume draft</button>
+                    <div className="gs-draft-copy">{getText(language, 'onboarding.savedDraft')}</div>
+                    <button className="gs-draft-btn" onClick={resumeDraft}>{getText(language, 'onboarding.resumeDraft')}</button>
                   </div>
                 )}
 
                 <div className="gs-form">
                   <div className="gs-field">
-                    <label className="gs-label">Mobile number</label>
+                    <label className="gs-label">{getText(language, 'onboarding.mobileNumber')}</label>
                     <div className="gs-phone-row">
                       <div className="gs-prefix">+91</div>
                       <input
@@ -535,9 +547,9 @@ export default function Onboarding({ onComplete }) {
 
                   <div className="gs-actions">
                     <button className="gs-btn" onClick={handleSendOTP} disabled={loading}>
-                      {loading ? 'Sending OTP…' : 'Send OTP'}
+                      {loading ? getText(language, 'onboarding.sendingOtp') : getText(language, 'onboarding.sendOtp')}
                     </button>
-                    {hasDraft && <button className="gs-link-btn" onClick={clearDraft}>Clear draft</button>}
+                    {hasDraft && <button className="gs-link-btn" onClick={clearDraft}>{getText(language, 'onboarding.clearDraft')}</button>}
                   </div>
                 </div>
               </>
@@ -545,22 +557,20 @@ export default function Onboarding({ onComplete }) {
 
             {step === 2 && (
               <>
-                <div className="gs-kicker">Step 2</div>
-                <h1 className="gs-title">Verify and map your working zone.</h1>
-                <p className="gs-lead">
-                  Once OTP is verified, GigShield uses your platform, zone, and daily income to return a live weekly premium and risk tier.
-                </p>
+                <div className="gs-kicker">2 / 3</div>
+                <h1 className="gs-title">{getText(language, 'onboarding.title2')}</h1>
+                <p className="gs-lead">{getText(language, 'onboarding.lead2')}</p>
 
                 {form.demoOtp && (
                   <div className="gs-demo">
-                    <div className="gs-info-kicker">Demo OTP</div>
+                    <div className="gs-info-kicker">{getText(language, 'onboarding.demoOtp')}</div>
                     <div className="gs-demo-code">{form.demoOtp}</div>
                   </div>
                 )}
 
                 <div className="gs-form">
                   <div className="gs-field">
-                    <label className="gs-label">OTP</label>
+                    <label className="gs-label">{getText(language, 'onboarding.otp')}</label>
                     <input
                       className="gs-input mono"
                       placeholder="123456"
@@ -571,7 +581,7 @@ export default function Onboarding({ onComplete }) {
                   </div>
 
                   <div className="gs-field">
-                    <label className="gs-label">Full name</label>
+                    <label className="gs-label">{getText(language, 'onboarding.fullName')}</label>
                     <input
                       className="gs-input"
                       placeholder="Ravi Kumar"
@@ -581,7 +591,7 @@ export default function Onboarding({ onComplete }) {
                   </div>
 
                   <div className="gs-field">
-                    <label className="gs-label">Delivery zone</label>
+                    <label className="gs-label">{getText(language, 'onboarding.deliveryZone')}</label>
                     <select className="gs-select" value={form.zone} onChange={(event) => set('zone', event.target.value)}>
                       {ZONES.map((zone) => (
                         <option key={zone.value} value={zone.value}>{zone.label}</option>
@@ -590,7 +600,7 @@ export default function Onboarding({ onComplete }) {
                   </div>
 
                   <div className="gs-field">
-                    <label className="gs-label">Average daily income</label>
+                    <label className="gs-label">{getText(language, 'onboarding.avgIncome')}</label>
                     <input
                       className="gs-input"
                       type="number"
@@ -603,10 +613,10 @@ export default function Onboarding({ onComplete }) {
 
                   <div className="gs-actions">
                     <button className="gs-btn" onClick={handleVerify} disabled={loading}>
-                      {loading ? 'Verifying…' : 'Create account'}
+                      {loading ? getText(language, 'onboarding.verifying') : getText(language, 'onboarding.createAccount')}
                     </button>
                     <button className="gs-link-btn" onClick={() => { setStep(1); setError(''); }}>
-                      Change number
+                      {getText(language, 'onboarding.changeNumber')}
                     </button>
                   </div>
                 </div>
@@ -615,15 +625,13 @@ export default function Onboarding({ onComplete }) {
 
             {step === 3 && worker && (
               <>
-                <div className="gs-kicker">Step 3</div>
-                <h1 className="gs-title">Your weekly quote is ready.</h1>
-                <p className="gs-lead">
-                  The app has priced your cover and assigned a risk tier. From here, you’ll move into Policy Studio to compare the recommendation against other cover shapes.
-                </p>
+                <div className="gs-kicker">3 / 3</div>
+                <h1 className="gs-title">{getText(language, 'onboarding.title3')}</h1>
+                <p className="gs-lead">{getText(language, 'onboarding.lead3')}</p>
 
                 <div className="gs-form">
                   <div className="gs-info-card">
-                    <div className="gs-info-kicker">Quote summary</div>
+                    <div className="gs-info-kicker">{getText(language, 'onboarding.quoteSummary')}</div>
                     <div className="gs-info-title">{worker.name}, your current weekly price is ₹{worker.weeklyPremium}.</div>
                     <div className="gs-info-copy">
                       Zone: {worker.zone?.replace(/_/g, ' ')} • Risk score: {Math.round((worker.riskScore || 0) * 100)}% • Risk tier: {worker.premiumTier}
@@ -632,9 +640,9 @@ export default function Onboarding({ onComplete }) {
 
                   <div className="gs-actions">
                     <button className="gs-btn" onClick={() => { clearDraft(); onComplete(worker); }}>
-                      Continue to policy studio
+                      {getText(language, 'onboarding.continuePolicy')}
                     </button>
-                    <button className="gs-link-btn" onClick={clearDraft}>Clear draft</button>
+                    <button className="gs-link-btn" onClick={clearDraft}>{getText(language, 'onboarding.clearDraft')}</button>
                   </div>
                 </div>
               </>
@@ -643,38 +651,36 @@ export default function Onboarding({ onComplete }) {
 
           <aside className="gs-aside">
             <div className="gs-preview-card">
-              <div className="gs-info-kicker">Live preview</div>
-              <div className="gs-preview-title">A cleaner first impression for GigShield.</div>
-              <div className="gs-preview-copy">
-                The redesign leans into an operations dashboard tone: sharper typography, quieter surfaces, and more useful information density.
-              </div>
+              <div className="gs-info-kicker">{getText(language, 'onboarding.preview')}</div>
+              <div className="gs-preview-title">{getText(language, 'onboarding.previewTitle')}</div>
+              <div className="gs-preview-copy">{getText(language, 'onboarding.previewCopy')}</div>
 
               <div className="gs-preview-grid">
                 <div className="gs-preview-metric">
-                  <div className="gs-info-kicker">Zone</div>
+                  <div className="gs-info-kicker">{getText(language, 'dashboard.zone')}</div>
                   <div className="gs-preview-value" style={{ fontSize: '1.2rem' }}>{selectedZone.label}</div>
                 </div>
                 <div className="gs-preview-metric">
-                  <div className="gs-info-kicker">Daily income</div>
+                  <div className="gs-info-kicker">{getText(language, 'onboarding.avgIncome')}</div>
                   <div className="gs-preview-value">₹{form.avgDailyIncome}</div>
                 </div>
               </div>
             </div>
 
             <div className="gs-info-card">
-              <div className="gs-info-kicker">What changed</div>
+              <div className="gs-info-kicker">{getText(language, 'onboarding.whatChanged')}</div>
               <div className="gs-info-list">
                 <div className="gs-info-item">
-                  <div className="gs-info-title">Less generic styling</div>
-                  <div className="gs-info-copy">No more repeated glass cards and neon gradients on every screen.</div>
+                  <div className="gs-info-title">{getText(language, 'onboarding.lessComplex')}</div>
+                  <div className="gs-info-copy">{getText(language, 'onboarding.lessComplexCopy')}</div>
                 </div>
                 <div className="gs-info-item">
-                  <div className="gs-info-title">Stronger product framing</div>
-                  <div className="gs-info-copy">Screens now read like an insurance operations tool rather than a visual concept demo.</div>
+                  <div className="gs-info-title">{getText(language, 'onboarding.strongerProduct')}</div>
+                  <div className="gs-info-copy">{getText(language, 'onboarding.strongerProductCopy')}</div>
                 </div>
                 <div className="gs-info-item">
-                  <div className="gs-info-title">More useful features</div>
-                  <div className="gs-info-copy">You now get plan comparison, shift briefs, and a cleaner claims workflow.</div>
+                  <div className="gs-info-title">{getText(language, 'onboarding.moreUseful')}</div>
+                  <div className="gs-info-copy">{getText(language, 'onboarding.moreUsefulCopy')}</div>
                 </div>
               </div>
             </div>

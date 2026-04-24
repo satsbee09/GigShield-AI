@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getClaims, getPolicy } from '../services/api';
+import { getText } from '../i18n';
 
 const SCENARIO_BRIEFS = [
   { label: 'Weather', value: 'Heavy rain likely after 6 PM', tone: 'warning' },
@@ -11,12 +12,6 @@ function getStatusTone(score) {
   if (score < 50) return 'danger';
   if (score < 70) return 'warning';
   return 'success';
-}
-
-function getScoreMessage(score) {
-  if (score < 50) return 'Shift risk is elevated. Expect auto-claim conditions to trigger faster.';
-  if (score < 70) return 'Mixed conditions. Shorter shifts and tighter route selection are safer.';
-  return 'Conditions are stable. Coverage remains active if the zone worsens.';
 }
 
 const css = `
@@ -578,7 +573,7 @@ const css = `
   }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefreshEnabled = true, refreshKey = 0, onSync }) {
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefreshEnabled = true, refreshKey = 0, onSync, language = 'en' }) {
   const [policy, setPolicy] = useState(null);
   const [claims, setClaims] = useState([]);
   const [wScore, setWScore] = useState(null);
@@ -629,16 +624,16 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
       setWScore(data.workabilityScore ?? 20);
       setNotice({
         type: 'disruption',
-        title: 'Stress test complete',
-        message: 'The engine simulated severe conditions. If this pattern appears live, GigShield can auto-generate a claim.',
+        title: getText(language, 'dashboard.stressDone'),
+        message: getText(language, 'dashboard.stressText'),
         score: data.workabilityScore ?? 20,
         payout: data.payoutPercent ?? 0,
       });
     } catch {
       setNotice({
         type: 'error',
-        title: 'Engine unavailable',
-        message: 'The AI engine on port 8000 could not be reached, so the simulation could not run.',
+        title: getText(language, 'dashboard.engineIssue'),
+        message: getText(language, 'dashboard.engineIssueText'),
       });
     } finally {
       setSimming(false);
@@ -655,25 +650,25 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
   const readinessItems = useMemo(() => {
     return [
       {
-        title: 'Policy status',
-        copy: policy ? `Protected in ${zoneName} until ${new Date(policy.endDate).toLocaleDateString('en-IN')}.` : 'No active policy detected for the current cycle.',
+        title: getText(language, 'dashboard.policyStatus'),
+        copy: getText(language, 'dashboard.readinessPolicy', { zone: zoneName, date: new Date(policy?.endDate || Date.now()).toLocaleDateString('en-IN'), hasPolicy: Boolean(policy) }),
       },
       {
-        title: 'Claims queue',
-        copy: pendingClaims.length > 0 ? `${pendingClaims.length} claim(s) are still being reviewed.` : 'No claims are currently waiting for verification.',
+        title: getText(language, 'dashboard.claimsQueue'),
+        copy: getText(language, 'dashboard.readinessClaims', { count: pendingClaims.length }),
       },
       {
-        title: 'Field note',
-        copy: (wScore ?? 72) < 60 ? 'Keep routes short and avoid low-visibility corridors this evening.' : 'Current conditions support a normal shift with routine caution.',
+        title: getText(language, 'dashboard.fieldNote'),
+        copy: getText(language, 'dashboard.readinessField', { score: wScore ?? 72 }),
       },
     ];
-  }, [pendingClaims.length, policy, wScore, zoneName]);
+  }, [language, pendingClaims.length, policy, wScore, zoneName]);
 
   if (loading) {
     return (
       <>
         <style>{css}</style>
-        <div className="db-loading">Loading live operations view…</div>
+        <div className="db-loading">{getText(language, 'dashboard.noClaimsLoading')}</div>
       </>
     );
   }
@@ -686,35 +681,33 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
           <section className="db-hero">
             <div>
               <div className="db-kicker">Live desk</div>
-              <h1 className="db-title">A cleaner command view for your shift.</h1>
-              <p className="db-lead">
-                GigShield keeps the important things in one place: how risky the zone feels right now, whether your cover is active, and what claims are moving through the pipeline.
-              </p>
+              <h1 className="db-title">{getText(language, 'dashboard.title')}</h1>
+              <p className="db-lead">{getText(language, 'dashboard.lead')}</p>
 
               <div className="db-hero-actions">
                 <button className="db-btn" onClick={policy ? onOpenClaims : onBuyPolicy}>
-                  {policy ? 'Review claim activity' : 'Activate cover'}
+                  {policy ? getText(language, 'dashboard.reviewClaims') : getText(language, 'dashboard.activateCover')}
                 </button>
                 <button className="db-outline-btn" onClick={handleSimulate} disabled={simming}>
-                  {simming ? 'Running test…' : 'Run disruption simulation'}
+                  {simming ? getText(language, 'dashboard.runningTest') : getText(language, 'dashboard.runTest')}
                 </button>
               </div>
 
               <div className="db-hero-meta">
                 <div className="db-meta-card">
-                  <div className="db-card-kicker">Zone</div>
+                  <div className="db-card-kicker">{getText(language, 'dashboard.zone')}</div>
                   <div className="db-meta-value" style={{ fontSize: '1.2rem' }}>{zoneName}</div>
-                  <div className="db-meta-copy">Live monitoring region tied to pricing and claims.</div>
+                  <div className="db-meta-copy">{getText(language, 'dashboard.zoneCopy')}</div>
                 </div>
                 <div className="db-meta-card">
-                  <div className="db-card-kicker">Risk tier</div>
+                  <div className="db-card-kicker">{getText(language, 'dashboard.riskTier')}</div>
                   <div className="db-meta-value">{worker?.premiumTier || 'Pending'}</div>
-                  <div className="db-meta-copy">Current tier assigned to your profile.</div>
+                  <div className="db-meta-copy">{getText(language, 'dashboard.riskCopy')}</div>
                 </div>
                 <div className="db-meta-card">
-                  <div className="db-card-kicker">Claims in review</div>
+                  <div className="db-card-kicker">{getText(language, 'dashboard.claimsReview')}</div>
                   <div className="db-meta-value">{pendingClaims.length}</div>
-                  <div className="db-meta-copy">Open cases still being verified.</div>
+                  <div className="db-meta-copy">{getText(language, 'dashboard.pendingCopy')}</div>
                 </div>
               </div>
             </div>
@@ -722,11 +715,11 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
             <div className="db-risk-card">
               <div className="db-risk-top">
                 <div>
-                  <div className="db-card-kicker">Workability index</div>
+                  <div className="db-card-kicker">{getText(language, 'dashboard.workIndex')}</div>
                   <div className="db-risk-score">{wScore ?? 72}<span>/100</span></div>
                 </div>
                 <span className={`db-tone-pill ${scoreTone}`}>
-                  {scoreTone === 'success' ? 'Stable' : scoreTone === 'warning' ? 'Watch' : 'Critical'}
+                  {scoreTone === 'success' ? getText(language, 'dashboard.stable') : scoreTone === 'warning' ? getText(language, 'dashboard.watch') : getText(language, 'dashboard.critical')}
                 </span>
               </div>
 
@@ -734,19 +727,25 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
                 <div className="db-risk-fill" style={{ width: `${wScore ?? 72}%` }} />
               </div>
 
-              <div className="db-risk-text">{getScoreMessage(wScore ?? 72)}</div>
+              <div className="db-risk-text">
+                {(wScore ?? 72) < 50
+                  ? getText(language, 'dashboard.workMessageLow')
+                  : (wScore ?? 72) < 70
+                    ? getText(language, 'dashboard.workMessageMid')
+                    : getText(language, 'dashboard.workMessageHigh')}
+              </div>
 
               <div className="db-risk-notes">
                 <div className="db-risk-note">
-                  <span>Zone watch</span>
+                  <span>{getText(language, 'dashboard.zoneWatch')}</span>
                   <strong>{zoneName}</strong>
                 </div>
                 <div className="db-risk-note">
-                  <span>Coverage</span>
-                  <strong>{policy ? 'Active now' : 'Inactive'}</strong>
+                  <span>{getText(language, 'dashboard.coverage')}</span>
+                  <strong>{policy ? getText(language, 'dashboard.activeNow') : getText(language, 'dashboard.inactive')}</strong>
                 </div>
                 <div className="db-risk-note">
-                  <span>Latest queue</span>
+                  <span>{getText(language, 'dashboard.latestQueue')}</span>
                   <strong>{pendingClaims.length} open</strong>
                 </div>
               </div>
@@ -758,43 +757,43 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
               <section className="db-panel">
                 <div className="db-panel-head">
                   <div>
-                    <div className="db-section-kicker">Coverage status</div>
-                    <div className="db-panel-title">Policy snapshot</div>
+                    <div className="db-section-kicker">{getText(language, 'dashboard.coverageStatus')}</div>
+                    <div className="db-panel-title">{getText(language, 'dashboard.policySnapshot')}</div>
                   </div>
                   <span className={`db-tone-pill ${policy ? 'success' : 'warning'}`}>
-                    {policy ? 'Active' : 'Needs action'}
+                    {policy ? getText(language, 'dashboard.active') : getText(language, 'dashboard.needsAction')}
                   </span>
                 </div>
 
                 {policy ? (
                   <div className="db-policy-grid">
                     <div className="db-policy-card">
-                      <div className="db-card-kicker">Weekly premium</div>
+                      <div className="db-card-kicker">{getText(language, 'dashboard.weeklyPremium')}</div>
                       <div className="db-policy-value">₹{policy.weeklyPremium}</div>
-                      <div className="db-policy-meta">Current billed amount for this protection cycle.</div>
+                      <div className="db-policy-meta">{getText(language, 'dashboard.policyAmountCopy')}</div>
                     </div>
                     <div className="db-policy-card">
-                      <div className="db-card-kicker">Daily cover</div>
+                      <div className="db-card-kicker">{getText(language, 'dashboard.dailyCover')}</div>
                       <div className="db-policy-value">₹{policy.coverageAmount}</div>
-                      <div className="db-policy-meta">Maximum payout available on disruption days.</div>
+                      <div className="db-policy-meta">{getText(language, 'dashboard.dailyCoverCopy')}</div>
                     </div>
                     <div className="db-policy-card">
-                      <div className="db-card-kicker">Zone</div>
+                      <div className="db-card-kicker">{getText(language, 'dashboard.zone')}</div>
                       <div className="db-policy-value" style={{ fontSize: '1.2rem' }}>{zoneName}</div>
-                      <div className="db-policy-meta">{policy.riskTier} risk tier with live monitoring enabled.</div>
+                      <div className="db-policy-meta">{getText(language, 'dashboard.zonePolicyCopy', { tier: policy.riskTier })}</div>
                     </div>
                     <div className="db-policy-card">
-                      <div className="db-card-kicker">Renews / expires</div>
+                      <div className="db-card-kicker">{getText(language, 'dashboard.renewExpiry')}</div>
                       <div className="db-policy-value">{policy.daysLeft}d</div>
-                      <div className="db-policy-meta">Coverage window ends on {new Date(policy.endDate).toLocaleDateString('en-IN')}.</div>
+                      <div className="db-policy-meta">{getText(language, 'dashboard.daysLeftCopy', { date: new Date(policy.endDate).toLocaleDateString('en-IN') })}</div>
                     </div>
                   </div>
                 ) : (
                   <div className="db-policy-empty">
-                    <div className="db-section-kicker">No active protection</div>
-                    <h3>This shift cycle is uncovered.</h3>
-                    <p>Open Policy Studio to compare your cover and turn protection back on before the next disruption window.</p>
-                    <button className="db-btn" onClick={onBuyPolicy}>Open Policy Studio</button>
+                    <div className="db-section-kicker">{getText(language, 'dashboard.noProtection')}</div>
+                    <h3>{getText(language, 'dashboard.noProtection')}</h3>
+                    <p>{getText(language, 'dashboard.noProtectionText')}</p>
+                    <button className="db-btn" onClick={onBuyPolicy}>{getText(language, 'policy.openStudio')}</button>
                   </div>
                 )}
               </section>
@@ -802,18 +801,18 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
               <section className="db-list">
                 <div className="db-list-head">
                   <div>
-                    <div className="db-section-kicker">Activity</div>
-                    <div className="db-list-title">Recent claim movement</div>
+                    <div className="db-section-kicker">{getText(language, 'dashboard.activity')}</div>
+                    <div className="db-list-title">{getText(language, 'dashboard.recentClaims')}</div>
                   </div>
-                  <button className="db-mini-btn" onClick={onOpenClaims}>See all claims</button>
+                  <button className="db-mini-btn" onClick={onOpenClaims}>{getText(language, 'dashboard.seeAllClaims')}</button>
                 </div>
 
                 <div className="db-list-body">
                   {recentClaims.length === 0 ? (
                     <div className="db-policy-empty">
-                      <div className="db-section-kicker">Quiet cycle</div>
-                      <h3>No claims yet.</h3>
-                      <p>When a disruption crosses the threshold, the claim feed will appear here automatically.</p>
+                      <div className="db-section-kicker">{getText(language, 'dashboard.quietCycle')}</div>
+                      <h3>{getText(language, 'dashboard.quietCycle')}</h3>
+                      <p>{getText(language, 'dashboard.quietCycleText')}</p>
                     </div>
                   ) : (
                     recentClaims.map((claim, index) => {
@@ -832,7 +831,7 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
                             </div>
                           </div>
                           <div className="db-claim-right">
-                            <div className="db-claim-amount">{status === 'paid' ? `+₹${claim.payoutAmount || 0}` : 'Under review'}</div>
+                            <div className="db-claim-amount">{status === 'paid' ? `+₹${claim.payoutAmount || 0}` : getText(language, 'dashboard.underReview')}</div>
                             <span className={`db-tone-pill ${tone}`}>{status}</span>
                           </div>
                         </div>
@@ -847,38 +846,38 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
               <section className="db-side-card">
                 <div className="db-side-head">
                   <div>
-                    <div className="db-section-kicker">Numbers</div>
-                    <div className="db-side-title">Protection metrics</div>
+                    <div className="db-section-kicker">{getText(language, 'dashboard.numbers')}</div>
+                    <div className="db-side-title">{getText(language, 'dashboard.protectionMetrics')}</div>
                   </div>
                 </div>
 
                 <div className="db-stats-grid">
                   <div className="db-stat-card">
-                    <div className="db-card-kicker">Paid out</div>
+                    <div className="db-card-kicker">{getText(language, 'dashboard.paidOut')}</div>
                     <div className="db-stat-value">₹{totalPaid.toLocaleString('en-IN')}</div>
-                    <div className="db-stat-meta">Claims received this cycle.</div>
+                    <div className="db-stat-meta">{getText(language, 'dashboard.paidOutCopy')}</div>
                   </div>
                   <div className="db-stat-card">
-                    <div className="db-card-kicker">Claims paid</div>
+                    <div className="db-card-kicker">{getText(language, 'dashboard.claimsPaid')}</div>
                     <div className="db-stat-value">{paidClaims.length}</div>
-                    <div className="db-stat-meta">Completed automatic payouts.</div>
+                    <div className="db-stat-meta">{getText(language, 'dashboard.claimsPaidCopy')}</div>
                   </div>
                   <div className="db-stat-card">
-                    <div className="db-card-kicker">In review</div>
+                    <div className="db-card-kicker">{getText(language, 'dashboard.inReview')}</div>
                     <div className="db-stat-value">{pendingClaims.length}</div>
-                    <div className="db-stat-meta">Claim(s) still being verified.</div>
+                    <div className="db-stat-meta">{getText(language, 'dashboard.reviewCopy')}</div>
                   </div>
                   <div className="db-stat-card">
-                    <div className="db-card-kicker">Tier</div>
+                    <div className="db-card-kicker">{getText(language, 'dashboard.tier')}</div>
                     <div className="db-stat-value" style={{ fontSize: '1.2rem' }}>{worker?.premiumTier || 'Pending'}</div>
-                    <div className="db-stat-meta">Risk tier linked to your home zone.</div>
+                    <div className="db-stat-meta">{getText(language, 'dashboard.tierCopy')}</div>
                   </div>
                 </div>
               </section>
 
               <section className="db-brief">
-                <div className="db-section-kicker">Shift brief</div>
-                <div className="db-panel-title">Today’s signals</div>
+                <div className="db-section-kicker">{getText(language, 'dashboard.shiftBrief')}</div>
+                <div className="db-panel-title">{getText(language, 'dashboard.todaySignals')}</div>
                 <div className="db-brief-grid" style={{ marginTop: 14 }}>
                   {SCENARIO_BRIEFS.map((brief) => (
                     <div className="db-brief-item" key={brief.label}>
@@ -893,8 +892,8 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
               </section>
 
               <section className="db-checklist">
-                <div className="db-section-kicker">Readiness</div>
-                <div className="db-panel-title">Pre-shift checklist</div>
+                <div className="db-section-kicker">{getText(language, 'dashboard.readiness')}</div>
+                <div className="db-panel-title">{getText(language, 'dashboard.preShift')}</div>
                 {readinessItems.map((item) => (
                   <div className="db-check-item" key={item.title}>
                     <div className="db-check-mark">+</div>
@@ -909,32 +908,32 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
               <section className="db-side-card">
                 <div className="db-side-head">
                   <div>
-                    <div className="db-section-kicker">New summary</div>
-                    <div className="db-side-title">Operations note</div>
+                    <div className="db-section-kicker">{getText(language, 'dashboard.numbers')}</div>
+                    <div className="db-side-title">{getText(language, 'dashboard.operationsNote')}</div>
                   </div>
                 </div>
 
                 <div className="db-side-list">
                   <div className="db-side-row">
                     <div>
-                      <div className="db-side-label">Current zone</div>
-                      <div className="db-side-copy">Primary area tied to monitoring and claim automation.</div>
+                      <div className="db-side-label">{getText(language, 'dashboard.currentZone')}</div>
+                      <div className="db-side-copy">{getText(language, 'dashboard.zoneCopy')}</div>
                     </div>
                     <div className="db-side-value">{zoneName}</div>
                   </div>
                   <div className="db-side-row">
                     <div>
-                      <div className="db-side-label">Coverage posture</div>
-                      <div className="db-side-copy">Quick summary of whether this week is protected.</div>
+                      <div className="db-side-label">{getText(language, 'dashboard.coveragePosture')}</div>
+                      <div className="db-side-copy">{getText(language, 'dashboard.coverageStatus')}</div>
                     </div>
-                    <div className="db-side-value">{policy ? 'Protected' : 'Uncovered'}</div>
+                    <div className="db-side-value">{policy ? getText(language, 'dashboard.protected') : getText(language, 'dashboard.uncovered')}</div>
                   </div>
                   <div className="db-side-row">
                     <div>
-                      <div className="db-side-label">Recommended action</div>
-                      <div className="db-side-copy">Simple next step based on live state.</div>
+                      <div className="db-side-label">{getText(language, 'dashboard.recommendedAction')}</div>
+                      <div className="db-side-copy">{getText(language, 'dashboard.preShift')}</div>
                     </div>
-                    <div className="db-side-value">{policy ? 'Monitor queue' : 'Buy cover'}</div>
+                    <div className="db-side-value">{policy ? getText(language, 'dashboard.monitorQueue') : getText(language, 'dashboard.buyCover')}</div>
                   </div>
                 </div>
               </section>
@@ -946,7 +945,7 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
           <div className="db-modal-backdrop" onClick={() => setNotice(null)}>
             <div className="db-modal" onClick={(event) => event.stopPropagation()}>
               <span className={`db-tone-pill ${notice.type === 'error' ? 'danger' : 'warning'}`}>
-                {notice.type === 'error' ? 'Issue' : 'Simulation'}
+                {notice.type === 'error' ? getText(language, 'dashboard.issue') : getText(language, 'dashboard.simulation')}
               </span>
               <h3>{notice.title}</h3>
               <p>{notice.message}</p>
@@ -954,17 +953,17 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefre
               {notice.type === 'disruption' && (
                 <div className="db-modal-grid">
                   <div className="db-modal-card">
-                    <span>Workability</span>
+                    <span>{getText(language, 'dashboard.workIndex')}</span>
                     <strong>{notice.score}/100</strong>
                   </div>
                   <div className="db-modal-card">
-                    <span>Projected payout</span>
+                    <span>{getText(language, 'dashboard.projectedPayout')}</span>
                     <strong>{notice.payout}%</strong>
                   </div>
                 </div>
               )}
 
-              <button className="db-btn" onClick={() => setNotice(null)}>Close</button>
+              <button className="db-btn" onClick={() => setNotice(null)}>{getText(language, 'dashboard.close')}</button>
             </div>
           </div>
         )}

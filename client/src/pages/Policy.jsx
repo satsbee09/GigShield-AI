@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPolicy } from '../services/api';
+import { getText } from '../i18n';
 
 const PLANS = [
   {
@@ -430,7 +431,7 @@ function getRecommendedPlanId(tier) {
   return 'shield-max';
 }
 
-export default function Policy({ worker, onSuccess, onBack }) {
+export default function Policy({ worker, onSuccess, onBack, language = 'en' }) {
   const recommendedPlanId = getRecommendedPlanId(worker?.premiumTier);
   const [selectedPlanId, setSelectedPlanId] = useState(recommendedPlanId);
   const [loading, setLoading] = useState(false);
@@ -472,22 +473,22 @@ export default function Policy({ worker, onSuccess, onBack }) {
         localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
         setNotice({
           type: 'success',
-          title: 'Coverage activated',
-          message: `${selectedPlan.name} is now active for this weekly cycle. GigShield will start monitoring your zone immediately.`,
+          title: getText(language, 'policy.activationDone'),
+          message: getText(language, 'policy.activationDoneText', { plan: selectedPlan.name }),
           worker: updatedWorker,
         });
       } else {
         setNotice({
           type: 'error',
-          title: 'Activation failed',
-          message: 'The policy could not be created right now. Please try again in a moment.',
+          title: getText(language, 'policy.activationFail'),
+          message: getText(language, 'policy.activationFailText'),
         });
       }
     } catch {
       setNotice({
         type: 'error',
-        title: 'Connection error',
-        message: 'The backend could not be reached on port 5000. Start the API and try again.',
+        title: getText(language, 'policy.connectionError'),
+        message: getText(language, 'policy.connectionErrorText'),
       });
     } finally {
       setLoading(false);
@@ -501,7 +502,7 @@ export default function Policy({ worker, onSuccess, onBack }) {
         {loading && (
           <div className="pl-loading-overlay">
             <div className="pl-spinner" />
-            <div>Activating policy…</div>
+            <div>{getText(language, 'policy.activating')}</div>
           </div>
         )}
 
@@ -515,13 +516,13 @@ export default function Policy({ worker, onSuccess, onBack }) {
                 className="pl-primary-btn"
                 onClick={() => {
                   if (notice.type === 'success' && notice.worker) {
-                    onSuccess(notice.worker);
-                    return;
-                  }
-                  setNotice(null);
-                }}
-              >
-                Continue
+                  onSuccess(notice.worker);
+                  return;
+                }
+                setNotice(null);
+              }}
+            >
+                {getText(language, 'policy.continue')}
               </button>
             </div>
           </div>
@@ -530,21 +531,19 @@ export default function Policy({ worker, onSuccess, onBack }) {
         <div className="pl-wrap">
           <div className="pl-topbar">
             <div className="pl-topbar-copy">
-              <div className="pl-kicker">Policy studio</div>
-              <div className="pl-topbar-title">Compare your weekly protection</div>
-              <div className="pl-topbar-sub">Built for {worker?.zone?.replace(/_/g, ' ')} with {worker?.premiumTier || 'active'} zone assumptions.</div>
+              <div className="pl-kicker">{getText(language, 'policy.policyStudio')}</div>
+              <div className="pl-topbar-title">{getText(language, 'policy.pageTitle')}</div>
+              <div className="pl-topbar-sub">{getText(language, 'policy.sub', { zone: worker?.zone?.replace(/_/g, ' '), tier: worker?.premiumTier || 'active' })}</div>
             </div>
-            <button className="pl-back-btn" onClick={onBack}>Back to workspace</button>
+            <button className="pl-back-btn" onClick={onBack}>{getText(language, 'policy.back')}</button>
           </div>
 
           <div className="pl-stage">
             <div style={{ display: 'grid', gap: '16px' }}>
               <div>
-                <div className="pl-section-kicker">Plan comparison</div>
-                <h1 className="pl-title">Choose the cover that matches your week.</h1>
-                <p className="pl-lead">
-                  Instead of a single generic card, this studio shows three cover shapes so you can see what changes with spend, payout ceiling, and disruption depth before you activate anything.
-                </p>
+                <div className="pl-section-kicker">{getText(language, 'policy.compare')}</div>
+                <h1 className="pl-title">{getText(language, 'policy.title')}</h1>
+                <p className="pl-lead">{getText(language, 'policy.lead')}</p>
               </div>
 
               <div className="pl-plan-grid">
@@ -563,24 +562,25 @@ export default function Policy({ worker, onSuccess, onBack }) {
                       <div className="pl-plan-head">
                         <div>
                           <div className="pl-card-kicker">Weekly cover</div>
+                          <div className="pl-card-kicker">{getText(language, 'policy.weeklyCover')}</div>
                           <div className="pl-plan-name">{plan.name}</div>
                         </div>
-                        {isRecommended && <span className="pl-pill">Recommended</span>}
+                        {isRecommended && <span className="pl-pill">{getText(language, 'policy.recommended')}</span>}
                       </div>
-                      <div className="pl-plan-price">₹{weeklyPrice}<span>/week</span></div>
+                      <div className="pl-plan-price">₹{weeklyPrice}<span>{getText(language, 'policy.perWeek')}</span></div>
                       <div className="pl-plan-copy">{plan.copy}</div>
 
                       <div className="pl-plan-stats">
                         <div className="pl-line">
-                          <span className="pl-line-copy">Daily payout</span>
+                          <span className="pl-line-copy">{getText(language, 'policy.dailyPayout')}</span>
                           <strong>₹{plan.coverage}</strong>
                         </div>
                         <div className="pl-line">
-                          <span className="pl-line-copy">High-risk days buffered</span>
+                          <span className="pl-line-copy">{getText(language, 'policy.badDays')}</span>
                           <strong>{plan.disruptionDays} days</strong>
                         </div>
                         <div className="pl-line">
-                          <span className="pl-line-copy">Claims lane</span>
+                          <span className="pl-line-copy">{getText(language, 'policy.supportLane')}</span>
                           <strong style={{ fontSize: '0.92rem' }}>{plan.support}</strong>
                         </div>
                       </div>
@@ -591,8 +591,8 @@ export default function Policy({ worker, onSuccess, onBack }) {
 
               <div className="pl-meta-grid">
                 <div className="pl-box">
-                  <div className="pl-section-kicker">Trigger map</div>
-                  <div className="pl-box-title">What this policy watches</div>
+                  <div className="pl-section-kicker">{getText(language, 'policy.triggers')}</div>
+                  <div className="pl-box-title">{getText(language, 'policy.triggers')}</div>
                   <div className="pl-feature-list">
                     {FEATURE_ROWS.map(([label, status]) => (
                       <div className="pl-feature-row" key={label}>
@@ -606,29 +606,29 @@ export default function Policy({ worker, onSuccess, onBack }) {
                 </div>
 
                 <div className="pl-box">
-                  <div className="pl-section-kicker">Profile context</div>
-                  <div className="pl-box-title">Why this recommendation fits</div>
+                  <div className="pl-section-kicker">{getText(language, 'policy.whyFit')}</div>
+                  <div className="pl-box-title">{getText(language, 'policy.whyFit')}</div>
                   <div className="pl-feature-list">
                     <div className="pl-feature-row">
                       <div>
-                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>Zone risk score</div>
+                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>{getText(language, 'policy.zoneRisk')}</div>
                         <div className="pl-feature-copy">Based on weather, AQI, and disruption inputs for your selected zone.</div>
                       </div>
                       <span className="pl-feature-tag">{riskScore}%</span>
                     </div>
                     <div className="pl-feature-row">
                       <div>
-                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>Current platform</div>
+                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>{getText(language, 'policy.currentPlatform')}</div>
                         <div className="pl-feature-copy">Used to keep payout behavior aligned with your delivery cycle.</div>
                       </div>
                       <span className="pl-feature-tag">{worker?.platform || 'N/A'}</span>
                     </div>
                     <div className="pl-feature-row">
                       <div>
-                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>Ops note</div>
-                        <div className="pl-feature-copy">Switching plans here changes your planning view only in demo mode.</div>
+                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>{getText(language, 'policy.opsNote')}</div>
+                        <div className="pl-feature-copy">{getText(language, 'policy.simpleModeNote')}</div>
                       </div>
-                      <span className="pl-feature-tag">Demo</span>
+                      <span className="pl-feature-tag">{getText(language, 'policy.demo')}</span>
                     </div>
                   </div>
                 </div>
@@ -638,18 +638,18 @@ export default function Policy({ worker, onSuccess, onBack }) {
             <aside className="pl-compare">
               <div className="pl-summary">
                 <div>
-                  <div className="pl-kicker">Selected cover</div>
+                  <div className="pl-kicker">{getText(language, 'policy.selectedCover')}</div>
                   <div className="pl-summary-title">{selectedPlan.name}</div>
                 </div>
 
                 <div className="pl-summary-grid">
                   <div className="pl-summary-card">
-                    <div className="pl-card-kicker">Daily cover</div>
+                    <div className="pl-card-kicker">{getText(language, 'policy.dailyPayout')}</div>
                     <div className="pl-summary-value">₹{selectedPlan.coverage}</div>
                     <div className="pl-summary-copy">Maximum daily income protection.</div>
                   </div>
                   <div className="pl-summary-card">
-                    <div className="pl-card-kicker">Potential value</div>
+                    <div className="pl-card-kicker">{getText(language, 'policy.potentialHelp')}</div>
                     <div className="pl-summary-value">₹{forecastValue}</div>
                     <div className="pl-summary-copy">If disruption lasts the full modeled window.</div>
                   </div>
@@ -663,32 +663,32 @@ export default function Policy({ worker, onSuccess, onBack }) {
 
                 <div className="pl-summary-actions">
                   <button className="pl-primary-btn" onClick={buyPolicy} disabled={loading}>
-                    {loading ? 'Activating…' : `Activate cover for ₹${worker?.weeklyPremium || 0}`}
+                    {loading ? getText(language, 'policy.activating') : getText(language, 'policy.activate', { amount: worker?.weeklyPremium || 0 })}
                   </button>
-                  <button className="pl-ghost-btn" onClick={onBack}>Review later</button>
+                  <button className="pl-ghost-btn" onClick={onBack}>{getText(language, 'policy.reviewLater')}</button>
                 </div>
               </div>
 
               <div className="pl-box">
-                <div className="pl-section-kicker">Feature add-on</div>
-                <div className="pl-box-title">Coverage planner</div>
+                <div className="pl-section-kicker">{getText(language, 'policy.planner')}</div>
+                <div className="pl-box-title">{getText(language, 'policy.planner')}</div>
                 <div className="pl-feature-list">
                   <div className="pl-feature-row">
                     <div>
-                      <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>Expected disruption days</div>
+                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>{getText(language, 'policy.expectedDays')}</div>
                       <div className="pl-feature-copy">Modeled for {selectedPlan.disruptionDays} high-friction days in a week.</div>
                     </div>
                     <span className="pl-feature-tag">{selectedPlan.disruptionDays} days</span>
                   </div>
                   <div className="pl-feature-row">
                     <div>
-                      <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>Support lane</div>
+                        <div className="pl-feature-copy" style={{ color: 'var(--text)' }}>{getText(language, 'policy.support')}</div>
                       <div className="pl-feature-copy">{selectedPlan.support}</div>
                     </div>
                     <span className="pl-feature-tag">Ops</span>
                   </div>
                 </div>
-                <p className="pl-notice">Demo mode only: plan switching is visual here so we can redesign the experience without changing your existing API contract.</p>
+                <p className="pl-notice">{getText(language, 'policy.simpleModeNote')}</p>
               </div>
             </aside>
           </div>

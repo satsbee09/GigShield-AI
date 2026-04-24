@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Claims from './pages/Claims';
 import Policy from './pages/Policy';
 import Profile from './pages/Profile';
+import { getText, LANGUAGES } from './i18n';
 import { getClaims, getPolicy } from './services/api';
 
 function getSavedThemeMode() {
@@ -16,6 +17,11 @@ function getSystemTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function getSavedLanguage() {
+  const saved = localStorage.getItem('gigshield_language');
+  return LANGUAGES.some((item) => item.code === saved) ? saved : 'en';
+}
+
 function formatDate(value) {
   return new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
@@ -23,6 +29,12 @@ function formatDate(value) {
 function formatTime(value) {
   if (!value) return 'Not synced yet';
   return new Date(value).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+}
+
+function getNotificationModeLabel(language, mode) {
+  if (mode === 'critical') return getText(language, 'profile.criticalOnly');
+  if (mode === 'muted') return getText(language, 'profile.mostlyMuted');
+  return getText(language, 'profile.allUpdates');
 }
 
 const css = `
@@ -339,7 +351,8 @@ const css = `
 
   .app-chip-btn,
   .app-icon-btn,
-  .app-account-trigger {
+  .app-account-trigger,
+  .app-language-select {
     border: 1px solid var(--line);
     background: var(--bg-elevated);
     color: var(--text);
@@ -361,6 +374,13 @@ const css = `
     border: 1px solid var(--line);
     background: var(--bg-elevated);
     color: var(--text-muted);
+  }
+
+  .app-language-select {
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+    font-weight: 600;
   }
 
   .app-status-chip strong {
@@ -714,6 +734,7 @@ export default function App() {
   const [screen, setScreen] = useState('onboarding');
   const [worker, setWorker] = useState(null);
   const [themeMode, setThemeMode] = useState(() => getSavedThemeMode() || 'system');
+  const [language, setLanguage] = useState(() => getSavedLanguage());
   const [theme, setTheme] = useState(() => {
     const mode = getSavedThemeMode();
     if (!mode || mode === 'system') return getSystemTheme();
@@ -743,6 +764,10 @@ export default function App() {
     document.body.classList.remove('theme-dark', 'theme-light');
     document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
   }, [theme, themeMode]);
+
+  useEffect(() => {
+    localStorage.setItem('gigshield_language', language);
+  }, [language]);
 
   useEffect(() => {
     if (themeMode === 'system') {
@@ -811,33 +836,33 @@ export default function App() {
   }
 
   const navTabs = [
-    { id: 'dashboard', label: 'Overview', sub: 'Risk desk', icon: '◧' },
-    { id: 'claims', label: 'Claims', sub: 'Payout history', icon: '◎' },
+    { id: 'dashboard', label: getText(language, 'app.navHome'), sub: getText(language, 'app.navHomeSub'), icon: '◧' },
+    { id: 'claims', label: getText(language, 'app.navClaims'), sub: getText(language, 'app.navClaimsSub'), icon: '◎' },
   ];
 
   const tabMeta = {
     dashboard: {
-      label: 'Overview',
-      description: 'Watch live disruption risk, policy health, and shift readiness.',
+      label: getText(language, 'app.dashboardTitle'),
+      description: getText(language, 'app.dashboardSub'),
     },
     claims: {
-      label: 'Claims',
-      description: 'Track auto-generated claims, export records, and audit status.',
+      label: getText(language, 'app.claimsTitle'),
+      description: getText(language, 'app.claimsSub'),
     },
     profile: {
-      label: 'Profile',
-      description: 'Manage identity, payout setup, alerts, and workspace preferences.',
+      label: getText(language, 'app.profileTitle'),
+      description: getText(language, 'app.profileSub'),
     },
   };
 
   const quickActions = [
-    { id: 'qa-home', label: 'Open dashboard', hint: 'Return to live risk overview', run: () => setTab('dashboard') },
-    { id: 'qa-claims', label: 'Open claims', hint: 'Review payouts and status', run: () => setTab('claims') },
-    { id: 'qa-profile', label: 'Open profile', hint: 'Manage account and preferences', run: () => setTab('profile') },
-    { id: 'qa-policy', label: 'Open policy studio', hint: 'Compare cover and activate protection', run: () => setScreen('policy') },
-    { id: 'qa-sync', label: 'Manual sync', hint: 'Refresh live workspace data now', run: () => setRefreshKey((prev) => prev + 1) },
-    { id: 'qa-theme', label: 'Change theme mode', hint: 'Cycle system, dark, and light', run: toggleTheme },
-    { id: 'qa-logout', label: 'Sign out', hint: 'Clear the local session', run: onLogout },
+    { id: 'qa-home', label: getText(language, 'app.actionDashboard'), hint: getText(language, 'app.actionDashboardHint'), run: () => setTab('dashboard') },
+    { id: 'qa-claims', label: getText(language, 'app.actionClaims'), hint: getText(language, 'app.actionClaimsHint'), run: () => setTab('claims') },
+    { id: 'qa-profile', label: getText(language, 'app.actionProfile'), hint: getText(language, 'app.actionProfileHint'), run: () => setTab('profile') },
+    { id: 'qa-policy', label: getText(language, 'app.actionPolicy'), hint: getText(language, 'app.actionPolicyHint'), run: () => setScreen('policy') },
+    { id: 'qa-sync', label: getText(language, 'app.actionSync'), hint: getText(language, 'app.actionSyncHint'), run: () => setRefreshKey((prev) => prev + 1) },
+    { id: 'qa-theme', label: getText(language, 'app.actionTheme'), hint: getText(language, 'app.actionThemeHint'), run: toggleTheme },
+    { id: 'qa-logout', label: getText(language, 'app.actionLogout'), hint: getText(language, 'app.actionLogoutHint'), run: onLogout },
   ];
 
   const filteredQuickActions = quickActions.filter((action) =>
@@ -934,14 +959,14 @@ export default function App() {
         items.push({
           id: `policy-${policy._id || 'active'}`,
           ts: Date.now(),
-          text: `Coverage live in ${worker.zone?.replace(/_/g, ' ') || 'your zone'} until ${formatDate(policy.endDate)}.`,
+          text: `${worker.zone?.replace(/_/g, ' ') || 'Your zone'} · ${formatDate(policy.endDate)}`,
           level: 'info',
         });
         if ((policy.daysLeft ?? 0) <= 2) {
           items.push({
             id: `policy-renew-${policy._id || 'active'}`,
             ts: Date.now() - 1,
-            text: `Renewal window is open. ${policy.daysLeft} day(s) left on your current cover.`,
+            text: `${policy.daysLeft} day(s) left on your cover.`,
             level: 'critical',
           });
         }
@@ -949,7 +974,7 @@ export default function App() {
         items.push({
           id: 'policy-missing',
           ts: Date.now(),
-          text: 'No active policy detected. Open Policy Studio to restore protection.',
+          text: getText(language, 'dashboard.noProtectionText'),
           level: 'critical',
         });
       }
@@ -964,10 +989,10 @@ export default function App() {
           const amount = claim.payoutAmount ? ` ₹${claim.payoutAmount}.` : '';
           const copy =
             status === 'paid'
-              ? `Claim paid for ${trigger}.${amount}`
+              ? `${getText(language, 'claims.paid')} · ${trigger}.${amount}`
               : status === 'rejected'
-                ? `Claim rejected for ${trigger}.`
-                : `Claim processing for ${trigger}.`;
+                ? `${getText(language, 'claims.rejected')} · ${trigger}.`
+                : `${getText(language, 'claims.processing')} · ${trigger}.`;
 
           items.push({
             id: `${status}-${claim._id || index}`,
@@ -994,7 +1019,7 @@ export default function App() {
       alive = false;
       clearInterval(timer);
     };
-  }, [autoRefreshEnabled, notificationMode, refreshKey, worker?._id, worker?.zone]);
+  }, [autoRefreshEnabled, language, notificationMode, refreshKey, worker?._id, worker?.zone]);
 
   useEffect(() => {
     function handleOutside(event) {
@@ -1016,7 +1041,9 @@ export default function App() {
     });
   }
 
-  if (screen === 'onboarding') return <Onboarding onComplete={onRegistered} />;
+  if (screen === 'onboarding') {
+    return <Onboarding onComplete={onRegistered} language={language} onLanguageChange={setLanguage} />;
+  }
 
   if (screen === 'policy') {
     return (
@@ -1024,6 +1051,7 @@ export default function App() {
         worker={worker}
         onSuccess={onPolicyPurchased}
         onBack={() => setScreen('dashboard')}
+        language={language}
       />
     );
   }
@@ -1037,7 +1065,7 @@ export default function App() {
           <div className="app-mark-badge">GS</div>
           <div>
             <div className="app-mark-title">GigShield</div>
-            <div className="app-mark-sub">Field Operations Cover</div>
+            <div className="app-mark-sub">{getText(language, 'app.brandSub')}</div>
           </div>
         </div>
 
@@ -1092,24 +1120,29 @@ export default function App() {
       <main className="app-main">
         <div className="app-topbar">
           <div className="app-topbar-copy">
-            <div className="app-topbar-label">Operations Workspace</div>
+            <div className="app-topbar-label">{getText(language, 'app.workspace')}</div>
             <div className="app-topbar-title">{activeTab.label}</div>
             <div className="app-topbar-sub">{activeTab.description}</div>
           </div>
 
           <div className="app-toolbar">
             <div className={`app-status-chip ${autoRefreshEnabled ? 'live' : 'off'}`}>
-              Auto refresh
-              <strong>{autoRefreshEnabled ? 'On' : 'Off'}</strong>
+              {getText(language, 'app.autoRefresh')}
+              <strong>{autoRefreshEnabled ? getText(language, 'app.on') : getText(language, 'app.off')}</strong>
             </div>
             <div className="app-status-chip">
-              Last sync
-              <strong>{formatTime(lastSyncAt)}</strong>
+              {getText(language, 'app.lastSync')}
+              <strong>{lastSyncAt ? formatTime(lastSyncAt) : getText(language, 'app.notSynced')}</strong>
             </div>
-            <button className="app-chip-btn" onClick={() => setRefreshKey((prev) => prev + 1)}>Sync now</button>
-            <button className="app-chip-btn" onClick={() => setQuickOpen(true)}>Quick actions</button>
+            <button className="app-chip-btn" onClick={() => setRefreshKey((prev) => prev + 1)}>{getText(language, 'app.syncNow')}</button>
+            <button className="app-chip-btn" onClick={() => setQuickOpen(true)}>{getText(language, 'app.quickActions')}</button>
+            <select className="app-language-select" value={language} onChange={(event) => setLanguage(event.target.value)}>
+              {LANGUAGES.map((item) => (
+                <option key={item.code} value={item.code}>{item.label}</option>
+              ))}
+            </select>
             <button className="app-chip-btn" onClick={toggleTheme}>
-              {themeMode === 'system' ? 'System mode' : themeMode === 'dark' ? 'Dark mode' : 'Light mode'}
+              {themeMode === 'system' ? getText(language, 'app.systemMode') : themeMode === 'dark' ? getText(language, 'app.darkMode') : getText(language, 'app.lightMode')}
             </button>
 
             <div className="app-notif-wrap" ref={notifWrapRef}>
@@ -1121,16 +1154,16 @@ export default function App() {
               {notifOpen && (
                 <div className="app-notif-panel">
                   <div className="app-notif-head">
-                    <span>Alerts</span>
+                    <span>{getText(language, 'app.alerts')}</span>
                     {unreadNotifications.length > 0 && (
                       <button className="app-notif-clear" onClick={markAllNotificationsAsRead}>
-                        Mark read
+                        {getText(language, 'app.markRead')}
                       </button>
                     )}
                   </div>
 
                   {notifications.length === 0 ? (
-                    <div className="app-notif-empty">No alerts right now.</div>
+                    <div className="app-notif-empty">{getText(language, 'app.noAlerts')}</div>
                   ) : (
                     <div className="app-notif-list">
                       {notifications.map((notification) => (
@@ -1154,7 +1187,7 @@ export default function App() {
                 </span>
                 <span className="app-account-copy">
                   <span className="app-account-name">{worker?.name || 'Worker'}</span>
-                  <span className="app-account-sub">{payoutMethodLabel} payout • {notificationMode} alerts</span>
+                  <span className="app-account-sub">{payoutMethodLabel} • {getNotificationModeLabel(language, notificationMode)}</span>
                 </span>
               </button>
 
@@ -1172,27 +1205,27 @@ export default function App() {
 
                   <div className="app-account-grid">
                     <div className="app-account-stat">
-                      <span>Payout</span>
+                      <span>{getText(language, 'app.payout')}</span>
                       <strong>{payoutMethodLabel}</strong>
                     </div>
                     <div className="app-account-stat">
-                      <span>Alerts</span>
-                      <strong>{notificationMode}</strong>
+                      <span>{getText(language, 'app.alerts')}</span>
+                      <strong>{getNotificationModeLabel(language, notificationMode)}</strong>
                     </div>
                   </div>
 
                   <div className="app-account-actions">
                     <button className="app-account-btn" onClick={() => { setTab('profile'); setAccountOpen(false); }}>
-                      Open profile settings
+                      {getText(language, 'app.accountSettings')}
                     </button>
                     <button className="app-account-btn" onClick={() => { setScreen('policy'); setAccountOpen(false); }}>
-                      Open policy studio
+                      {getText(language, 'app.openPolicy')}
                     </button>
                     <button className="app-account-btn" onClick={() => { setRefreshKey((prev) => prev + 1); setAccountOpen(false); }}>
-                      Run workspace sync
+                      {getText(language, 'app.runSync')}
                     </button>
                     <button className="app-account-btn danger" onClick={onLogout}>
-                      Sign out
+                      {getText(language, 'app.signOut')}
                     </button>
                   </div>
                 </div>
@@ -1210,10 +1243,11 @@ export default function App() {
               autoRefreshEnabled={autoRefreshEnabled}
               refreshKey={refreshKey}
               onSync={() => setLastSyncAt(new Date().toISOString())}
+              language={language}
             />
           )}
 
-          {tab === 'claims' && <Claims worker={worker} />}
+          {tab === 'claims' && <Claims worker={worker} language={language} />}
 
           {tab === 'profile' && (
             <Profile
@@ -1221,6 +1255,8 @@ export default function App() {
               onLogout={onLogout}
               onOpenPolicy={() => setScreen('policy')}
               onUpdateProfile={onUpdateProfile}
+              language={language}
+              onLanguageChange={setLanguage}
             />
           )}
         </div>
@@ -1232,13 +1268,13 @@ export default function App() {
             <input
               ref={quickInputRef}
               className="app-command-input"
-              placeholder="Search actions"
+              placeholder={getText(language, 'app.commandPlaceholder')}
               value={quickQuery}
               onChange={(event) => setQuickQuery(event.target.value)}
             />
 
             {filteredQuickActions.length === 0 ? (
-              <div className="app-command-empty">No matching actions.</div>
+              <div className="app-command-empty">{getText(language, 'app.noActions')}</div>
             ) : (
               <div className="app-command-list">
                 {filteredQuickActions.map((action) => (
