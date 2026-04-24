@@ -11,417 +11,312 @@ const ZONES = [
 ];
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
   .pf-screen {
-    background:
-      radial-gradient(circle at 85% 15%, rgba(25,215,165,0.12), transparent 28%),
-      radial-gradient(circle at 10% 80%, rgba(79,140,255,0.12), transparent 26%),
-      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-    padding: 48px 16px 28px;
-    position: relative;
+    min-height: 100%;
+    padding: 24px;
   }
 
-  .pf-bg-orb {
-    position: fixed;
-    width: 250px;
-    height: 250px;
-    right: -70px;
-    bottom: -70px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(25,215,165,0.08) 0%, transparent 70%);
-    pointer-events: none;
+  .pf-stack {
+    display: grid;
+    gap: 16px;
   }
 
-  .pf-inner {
-    position: relative;
-    z-index: 1;
-    max-width: 420px;
-    margin: 0 auto;
-  }
-
+  .pf-hero,
   .pf-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 12px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
   }
 
-  .pf-head {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .pf-hero {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+    gap: 16px;
   }
 
-  .pf-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(25,215,165,0.16), rgba(79,140,255,0.12));
-    border: 1px solid rgba(25,215,165,0.22);
-    color: #66f0c9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: 700;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .pf-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .pf-name {
-    color: #fff;
-    font-size: 19px;
-    font-weight: 600;
-    letter-spacing: -0.3px;
-    margin-bottom: 2px;
-  }
-
-  .pf-sub {
-    color: #8ea3bc;
-    font-size: 12px;
+  .pf-kicker,
+  .pf-card-kicker,
+  .pf-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.68rem;
   }
 
   .pf-title {
-    color: #8ea3bc;
-    font-size: 10px;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 3rem);
+    line-height: 0.98;
+    letter-spacing: -0.06em;
+    margin: 10px 0 12px;
   }
 
-  .pf-row {
+  .pf-lead,
+  .pf-sub,
+  .pf-row-copy,
+  .pf-info-copy,
+  .pf-help-text,
+  .pf-help-item {
+    color: var(--text-muted);
+    line-height: 1.55;
+  }
+
+  .pf-headline {
     display: flex;
-    justify-content: space-between;
+    gap: 16px;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
 
-  .pf-row:last-child {
-    border-bottom: none;
+  .pf-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--accent) 22%, var(--bg-ink) 78%);
+    color: #fff6ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    overflow: hidden;
   }
 
-  .pf-key {
-    color: #8ea3bc;
-    font-size: 12px;
+  .pf-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
-  .pf-val {
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: capitalize;
+  .pf-name {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin-top: 6px;
   }
 
-  .pf-val.mono {
-    font-family: 'DM Mono', monospace;
-    letter-spacing: -0.2px;
+  .pf-chip-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pf-chip {
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+
+  .pf-chip-value {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 8px 0 4px;
+  }
+
+  .pf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 16px;
+  }
+
+  .pf-card {
+    padding: 18px;
+  }
+
+  .pf-card-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin: 6px 0 14px;
+  }
+
+  .pf-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .pf-field {
+    display: grid;
+    gap: 8px;
   }
 
   .pf-input,
   .pf-select {
     width: 100%;
-    margin-top: 6px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    border-radius: 12px;
-    color: #fff;
-    padding: 10px 11px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 12px 14px;
     outline: none;
   }
 
-  .pf-input:focus,
-  .pf-select:focus {
-    border-color: rgba(25,215,165,0.3);
-    background: rgba(25,215,165,0.04);
-    box-shadow: 0 0 0 4px rgba(25,215,165,0.08);
-  }
-
-  .pf-select option {
-    background: #0D1B2A;
-  }
-
-  .pf-form-row {
-    margin-bottom: 12px;
-  }
-
-  .pf-label {
-    color: #8ea3bc;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  .pf-form-actions {
+  .pf-row {
     display: flex;
-    gap: 8px;
-    margin-top: 6px;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
   }
 
-  .pf-save-btn,
-  .pf-cancel-btn {
-    flex: 1;
-    border-radius: 12px;
-    padding: 10px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
+  .pf-row:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .pf-row-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .pf-row-value {
+    text-align: right;
+    font-weight: 700;
+  }
+
+  .pf-actions {
+    display: grid;
+    gap: 10px;
+  }
+
+  .pf-btn,
+  .pf-btn-primary,
+  .pf-btn-danger {
+    width: 100%;
+    border-radius: 16px;
+    padding: 12px 14px;
+    font-weight: 700;
     cursor: pointer;
+    transition: transform 0.18s ease;
   }
 
-  .pf-save-btn {
-    border: 1px solid rgba(25,215,165,0.25);
-    background: rgba(25,215,165,0.08);
-    color: #66f0c9;
+  .pf-btn,
+  .pf-btn-danger {
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
   }
 
-  .pf-cancel-btn {
-    border: 1px solid rgba(255,255,255,0.12);
-    background: transparent;
-    color: #b0bfd0;
+  .pf-btn-primary {
+    border: none;
+    background: var(--accent);
+    color: #fff6ee;
   }
 
-  .pf-error {
-    margin-top: 2px;
-    margin-bottom: 10px;
-    color: #ff7b7b;
-    font-size: 12px;
+  .pf-btn-danger {
+    color: var(--danger);
+  }
+
+  .pf-btn:hover,
+  .pf-btn-primary:hover,
+  .pf-btn-danger:hover {
+    transform: translateY(-1px);
   }
 
   .pf-photo-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .pf-photo-btn {
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.04);
-    color: #b0bfd0;
-    border-radius: 12px;
-    padding: 8px 11px;
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
+  .pf-photo-btn,
+  .pf-photo-remove {
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 10px 12px;
     cursor: pointer;
-  }
-
-  .pf-photo-btn:hover {
-    border-color: rgba(255,255,255,0.22);
-    color: #fff;
+    font-weight: 600;
   }
 
   .pf-photo-remove {
-    border: 1px solid rgba(255,107,107,0.35);
-    background: transparent;
-    color: #ff7b7b;
-    border-radius: 12px;
-    padding: 8px 11px;
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-  }
-
-  .pf-photo-remove:hover {
-    border-color: rgba(232,85,85,0.55);
+    color: var(--danger);
   }
 
   .pf-hidden-file {
     display: none;
   }
 
+  .pf-error {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-radius: 14px;
+    padding: 12px;
+  }
+
   .pf-toast {
     position: fixed;
     left: 50%;
-    bottom: 82px;
+    bottom: 24px;
     transform: translateX(-50%);
+    background: var(--bg-ink);
+    color: var(--text-inverse);
+    border-radius: 999px;
+    padding: 10px 14px;
     z-index: 60;
-    border-radius: 10px;
-    border: 1px solid rgba(25,215,165,0.25);
-    background: rgba(25,215,165,0.08);
-    color: #66f0c9;
-    font-size: 12px;
-    padding: 9px 13px;
-    white-space: nowrap;
-  }
-
-  .pf-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  .pf-stat {
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    background: rgba(255,255,255,0.04);
-    padding: 12px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-
-  .pf-stat-val {
-    color: #fff;
-    font-family: 'DM Mono', monospace;
-    font-size: 20px;
-    margin-bottom: 3px;
-  }
-
-  .pf-stat-val.green {
-    color: #66f0c9;
-  }
-
-  .pf-stat-key {
-    color: #8ea3bc;
-    font-size: 10px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-
-  .pf-btn {
-    width: 100%;
-    border-radius: 14px;
-    padding: 12px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-    color: #b0bfd0;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    margin-bottom: 8px;
-  }
-
-  .pf-btn:hover {
-    border-color: rgba(255,255,255,0.16);
-    color: #fff;
-  }
-
-  .pf-btn-green {
-    border-color: rgba(25,215,165,0.25);
-    background: rgba(25,215,165,0.08);
-    color: #66f0c9;
-  }
-
-  .pf-btn-danger {
-    border-color: rgba(255,107,107,0.35);
-    color: #ff7b7b;
   }
 
   .pf-help-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(2, 8, 16, 0.74);
+    background: rgba(17, 22, 29, 0.42);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 18px;
-    z-index: 90;
+    z-index: 70;
   }
 
   .pf-help-modal {
-    width: min(420px, 100%);
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: linear-gradient(180deg, rgba(11,22,38,0.98) 0%, rgba(7,15,27,0.98) 100%);
-    box-shadow: 0 20px 48px rgba(0,0,0,0.44);
-    overflow: hidden;
-  }
-
-  .pf-help-head {
-    padding: 14px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    width: min(460px, 100%);
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    padding: 20px;
   }
 
   .pf-help-title {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.2px;
-  }
-
-  .pf-help-close {
-    border: 1px solid rgba(255,255,255,0.16);
-    background: rgba(255,255,255,0.04);
-    color: #b0bfd0;
-    border-radius: 10px;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-
-  .pf-help-body {
-    padding: 14px 16px 16px;
-  }
-
-  .pf-help-text {
-    color: #9db0c4;
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 12px;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin: 8px 0 10px;
   }
 
   .pf-help-list {
     margin: 0;
-    padding: 0;
-    list-style: none;
+    padding-left: 18px;
     display: grid;
     gap: 8px;
-    margin-bottom: 14px;
   }
 
-  .pf-help-item {
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
-    padding: 10px 11px;
-    color: #d4e0ee;
-    font-size: 12px;
+  @media (max-width: 920px) {
+    .pf-hero,
+    .pf-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .pf-help-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
+  @media (max-width: 640px) {
+    .pf-screen {
+      padding: 16px;
+    }
 
-  .pf-help-btn {
-    border: 1px solid rgba(79,140,255,0.28);
-    background: rgba(79,140,255,0.1);
-    color: #b9d5ff;
-    border-radius: 10px;
-    padding: 9px;
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-  }
+    .pf-chip-grid {
+      grid-template-columns: 1fr;
+    }
 
-  .pf-help-btn.secondary {
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.03);
-    color: #b0bfd0;
+    .pf-row {
+      flex-direction: column;
+    }
+
+    .pf-row-value {
+      text-align: left;
+    }
   }
 `;
 
@@ -430,7 +325,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('Profile saved successfully');
+  const [toastMessage, setToastMessage] = useState('Profile saved');
   const [helpOpen, setHelpOpen] = useState(false);
   const [form, setForm] = useState({
     name: worker?.name || '',
@@ -451,7 +346,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   }, [worker]);
 
   useEffect(() => {
-    if (!showToast) return;
+    if (!showToast) return undefined;
     const timer = setTimeout(() => setShowToast(false), 1800);
     return () => clearTimeout(timer);
   }, [showToast]);
@@ -459,17 +354,14 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   function handleProfilePhotoChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
-      setError('Please choose a valid image file.');
+      setError('Please choose an image file.');
       return;
     }
-
     if (file.size > 2 * 1024 * 1024) {
-      setError('Image should be less than 2MB.');
+      setError('Image should be under 2MB.');
       return;
     }
-
     const reader = new FileReader();
     reader.onload = () => {
       setForm((prev) => ({ ...prev, profileImage: typeof reader.result === 'string' ? reader.result : '' }));
@@ -481,18 +373,16 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   function handleSaveProfile() {
     const name = form.name.trim();
     const phone = form.phone.trim();
-
     if (!name) {
       setError('Name is required.');
       return;
     }
-    if (!phone || !/^\d{10}$/.test(phone)) {
+    if (!/^\d{10}$/.test(phone)) {
       setError('Enter a valid 10-digit phone number.');
       return;
     }
 
     const selectedZone = ZONES.find((zone) => zone.value === form.zone);
-
     onUpdateProfile({
       ...worker,
       name,
@@ -506,15 +396,13 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
     setError('');
     setIsEditing(false);
-    setToastMessage('Profile saved successfully');
+    setToastMessage('Profile saved');
     setShowToast(true);
   }
 
   function handleCopySupportEmail() {
     const supportEmail = 'support@gigshield.ai';
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(supportEmail).catch(() => {});
-    }
+    navigator.clipboard?.writeText(supportEmail).catch(() => {});
     setToastMessage('Support email copied');
     setShowToast(true);
   }
@@ -523,178 +411,205 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
     <>
       <style>{css}</style>
       <div className="pf-screen">
-        <div className="pf-bg-orb" />
-        <div className="pf-inner">
-          <div className="pf-card">
-            <div className="pf-head">
-              <div className="pf-avatar">
-                {worker?.profileImage ? (
-                  <img src={worker.profileImage} alt="Profile" className="pf-avatar-img" />
-                ) : (
-                  worker?.name?.[0]?.toUpperCase() || 'U'
-                )}
-              </div>
-              <div>
-                <div className="pf-name">{worker?.name || 'Worker'}</div>
-                <div className="pf-sub">+91 {worker?.phone} · {worker?.platform}</div>
-              </div>
+        <div className="pf-stack">
+          <section className="pf-hero">
+            <div>
+              <div className="pf-kicker">Profile studio</div>
+              <h1 className="pf-title">Personal settings without the demo-app feel.</h1>
+              <p className="pf-lead">
+                This screen now behaves more like an operations profile: clean identity details, editable field data, and support shortcuts that feel deliberate instead of filler.
+              </p>
             </div>
-          </div>
 
-          <div className="pf-grid">
-            <div className="pf-stat">
-              <div className="pf-stat-val">₹{worker?.weeklyPremium || 0}</div>
-              <div className="pf-stat-key">Weekly premium</div>
-            </div>
-            <div className="pf-stat">
-              <div className="pf-stat-val green">{worker?.premiumTier || 'N/A'}</div>
-              <div className="pf-stat-key">Risk tier</div>
-            </div>
-          </div>
+            <div className="pf-card" style={{ boxShadow: 'none', margin: 0 }}>
+              <div className="pf-headline">
+                <div className="pf-avatar">
+                  {worker?.profileImage ? <img src={worker.profileImage} alt="Profile" /> : worker?.name?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div>
+                  <div className="pf-card-kicker">Member</div>
+                  <div className="pf-name">{worker?.name || 'Worker'}</div>
+                  <div className="pf-sub">+91 {worker?.phone} • {worker?.platform}</div>
+                </div>
+              </div>
 
-          <div className="pf-card">
-            <div className="pf-title">Account details</div>
-            {!isEditing ? (
-              <>
-                <div className="pf-row">
-                  <span className="pf-key">Work zone</span>
-                  <span className="pf-val">{zoneName}</span>
+              <div className="pf-chip-grid" style={{ marginTop: 16 }}>
+                <div className="pf-chip">
+                  <div className="pf-card-kicker">Weekly premium</div>
+                  <div className="pf-chip-value">₹{worker?.weeklyPremium || 0}</div>
+                  <div className="pf-sub">Current plan cost</div>
                 </div>
-                <div className="pf-row">
-                  <span className="pf-key">Platform</span>
-                  <span className="pf-val">{worker?.platform || '-'}</span>
+                <div className="pf-chip">
+                  <div className="pf-card-kicker">Risk tier</div>
+                  <div className="pf-chip-value">{worker?.premiumTier || 'N/A'}</div>
+                  <div className="pf-sub">Zone-based pricing tier</div>
                 </div>
-                <div className="pf-row">
-                  <span className="pf-key">Contact</span>
-                  <span className="pf-val mono">+91 {worker?.phone || '-'}</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="pf-photo-row">
-                  <div className="pf-avatar">
-                    {form.profileImage ? (
-                      <img src={form.profileImage} alt="Profile preview" className="pf-avatar-img" />
-                    ) : (
-                      form.name?.[0]?.toUpperCase() || 'U'
-                    )}
+              </div>
+            </div>
+          </section>
+
+          <section className="pf-grid">
+            <div className="pf-card">
+              <div className="pf-kicker">Identity</div>
+              <div className="pf-card-title">{isEditing ? 'Edit profile details' : 'Account details'}</div>
+
+              {!isEditing ? (
+                <>
+                  <div className="pf-row">
+                    <div>
+                      <div className="pf-row-title">Work zone</div>
+                      <div className="pf-row-copy">Current monitoring region for risk and claims.</div>
+                    </div>
+                    <div className="pf-row-value">{zoneName}</div>
                   </div>
-                  <label className="pf-photo-btn" htmlFor="pf-photo-input">
-                    Upload photo
-                  </label>
-                  {form.profileImage && (
-                    <button
-                      className="pf-photo-remove"
-                      onClick={() => setForm((prev) => ({ ...prev, profileImage: '' }))}
+                  <div className="pf-row">
+                    <div>
+                      <div className="pf-row-title">Platform</div>
+                      <div className="pf-row-copy">Used for payout planning and account context.</div>
+                    </div>
+                    <div className="pf-row-value">{worker?.platform || '-'}</div>
+                  </div>
+                  <div className="pf-row">
+                    <div>
+                      <div className="pf-row-title">Contact</div>
+                      <div className="pf-row-copy">Primary mobile for sign-in and alerts.</div>
+                    </div>
+                    <div className="pf-row-value">+91 {worker?.phone || '-'}</div>
+                  </div>
+                </>
+              ) : (
+                <div className="pf-form">
+                  <div className="pf-photo-row">
+                    <div className="pf-avatar">
+                      {form.profileImage ? <img src={form.profileImage} alt="Preview" /> : form.name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <label className="pf-photo-btn" htmlFor="profile-photo-input">Upload photo</label>
+                    {form.profileImage && (
+                      <button className="pf-photo-remove" onClick={() => setForm((prev) => ({ ...prev, profileImage: '' }))}>
+                        Remove
+                      </button>
+                    )}
+                    <input
+                      id="profile-photo-input"
+                      className="pf-hidden-file"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePhotoChange}
+                    />
+                  </div>
+
+                  <div className="pf-field">
+                    <label className="pf-label">Full name</label>
+                    <input
+                      className="pf-input"
+                      value={form.name}
+                      onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                    />
+                  </div>
+
+                  <div className="pf-field">
+                    <label className="pf-label">Phone number</label>
+                    <input
+                      className="pf-input"
+                      value={form.phone}
+                      onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                    />
+                  </div>
+
+                  <div className="pf-field">
+                    <label className="pf-label">Platform</label>
+                    <select
+                      className="pf-select"
+                      value={form.platform}
+                      onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))}
                     >
-                      Remove
-                    </button>
-                  )}
-                  <input
-                    id="pf-photo-input"
-                    className="pf-hidden-file"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePhotoChange}
-                  />
+                      {PLATFORMS.map((platform) => (
+                        <option key={platform} value={platform}>{platform}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pf-field">
+                    <label className="pf-label">Zone</label>
+                    <select
+                      className="pf-select"
+                      value={form.zone}
+                      onChange={(event) => setForm((prev) => ({ ...prev, zone: event.target.value }))}
+                    >
+                      {ZONES.map((zone) => (
+                        <option key={zone.value} value={zone.value}>{zone.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {error && <div className="pf-error">{error}</div>}
+
+                  <div className="pf-actions">
+                    <button className="pf-btn-primary" onClick={handleSaveProfile}>Save profile</button>
+                    <button className="pf-btn" onClick={() => { setIsEditing(false); setError(''); }}>Cancel</button>
+                  </div>
                 </div>
+              )}
+            </div>
 
-                <div className="pf-form-row">
-                  <div className="pf-label">Full name</div>
-                  <input
-                    className="pf-input"
-                    value={form.name}
-                    onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Enter your full name"
-                  />
+            <div className="pf-stack">
+              <div className="pf-card">
+                <div className="pf-kicker">New feature</div>
+                <div className="pf-card-title">Safety and support</div>
+                <div className="pf-row">
+                  <div>
+                    <div className="pf-row-title">Support contact</div>
+                    <div className="pf-row-copy">Quick access when claims or location sync look off.</div>
+                  </div>
+                  <div className="pf-row-value">support@gigshield.ai</div>
                 </div>
-
-                <div className="pf-form-row">
-                  <div className="pf-label">Phone number</div>
-                  <input
-                    className="pf-input"
-                    value={form.phone}
-                    onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
-                    placeholder="10-digit phone number"
-                  />
+                <div className="pf-row">
+                  <div>
+                    <div className="pf-row-title">Monitoring region</div>
+                    <div className="pf-row-copy">Claims depend on this zone staying accurate.</div>
+                  </div>
+                  <div className="pf-row-value">{zoneName}</div>
                 </div>
+              </div>
 
-                <div className="pf-form-row">
-                  <div className="pf-label">Platform</div>
-                  <select
-                    className="pf-select"
-                    value={form.platform}
-                    onChange={(e) => setForm((prev) => ({ ...prev, platform: e.target.value }))}
-                  >
-                    {PLATFORMS.map((platform) => (
-                      <option key={platform} value={platform}>{platform}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="pf-form-row">
-                  <div className="pf-label">Work zone</div>
-                  <select
-                    className="pf-select"
-                    value={form.zone}
-                    onChange={(e) => setForm((prev) => ({ ...prev, zone: e.target.value }))}
-                  >
-                    {ZONES.map((zone) => (
-                      <option key={zone.value} value={zone.value}>{zone.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {error && <div className="pf-error">{error}</div>}
-
-                <div className="pf-form-actions">
-                  <button className="pf-cancel-btn" onClick={() => { setIsEditing(false); setError(''); }}>
-                    Cancel
+              <div className="pf-card">
+                <div className="pf-kicker">Actions</div>
+                <div className="pf-card-title">Workspace controls</div>
+                <div className="pf-actions">
+                  <button className="pf-btn-primary" onClick={() => setIsEditing(true)}>
+                    {isEditing ? 'Editing active' : 'Edit profile'}
                   </button>
-                  <button className="pf-save-btn" onClick={handleSaveProfile}>
-                    Save profile
-                  </button>
+                  <button className="pf-btn" onClick={onOpenPolicy}>Open policy studio</button>
+                  <button className="pf-btn" onClick={() => setHelpOpen(true)}>Help and support</button>
+                  <button className="pf-btn-danger" onClick={onLogout}>Sign out</button>
                 </div>
-              </>
-            )}
-          </div>
-
-          <div className="pf-card">
-            <div className="pf-title">Actions</div>
-            <button className="pf-btn" onClick={() => setIsEditing(true)}>
-              {isEditing ? 'Editing profile...' : 'Set up profile'}
-            </button>
-            <button className="pf-btn pf-btn-green" onClick={onOpenPolicy}>Manage policy</button>
-            <button className="pf-btn" onClick={() => setHelpOpen(true)}>Help & support</button>
-            <button className="pf-btn">About GigShield AI</button>
-            <button className="pf-btn pf-btn-danger" onClick={onLogout}>Sign out</button>
-          </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
+
       {helpOpen && (
         <div className="pf-help-backdrop" onClick={() => setHelpOpen(false)}>
-          <div className="pf-help-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pf-help-head">
-              <div className="pf-help-title">Help & Support</div>
-              <button className="pf-help-close" onClick={() => setHelpOpen(false)}>Close</button>
-            </div>
-            <div className="pf-help-body">
-              <p className="pf-help-text">
-                Quick checks before raising support: keep policy active, ensure location access, and allow auto-refresh for claims.
-              </p>
-              <ul className="pf-help-list">
-                <li className="pf-help-item">Claims are generated automatically when disruption thresholds are crossed.</li>
-                <li className="pf-help-item">Policy status refreshes every minute on the dashboard.</li>
-                <li className="pf-help-item">If payouts are delayed, verify server and AI engine are both running.</li>
-              </ul>
-              <div className="pf-help-actions">
-                <button className="pf-help-btn" onClick={handleCopySupportEmail}>Copy support email</button>
-                <button className="pf-help-btn secondary" onClick={() => setHelpOpen(false)}>Done</button>
-              </div>
+          <div className="pf-help-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="pf-kicker">Support</div>
+            <div className="pf-help-title">Quick checks before raising a ticket</div>
+            <p className="pf-help-text">
+              These are the three most common causes of confusing payout behavior in the demo environment.
+            </p>
+            <ul className="pf-help-list">
+              <li className="pf-help-item">Make sure the backend and AI engine are both running before you test disruptions.</li>
+              <li className="pf-help-item">Keep your work zone updated so location-based claim triggers stay aligned.</li>
+              <li className="pf-help-item">If a payout looks delayed, refresh the claims screen after the next polling cycle.</li>
+            </ul>
+            <div className="pf-actions" style={{ marginTop: 16 }}>
+              <button className="pf-btn-primary" onClick={handleCopySupportEmail}>Copy support email</button>
+              <button className="pf-btn" onClick={() => setHelpOpen(false)}>Close</button>
             </div>
           </div>
         </div>
       )}
+
       {showToast && <div className="pf-toast">{toastMessage}</div>}
     </>
   );

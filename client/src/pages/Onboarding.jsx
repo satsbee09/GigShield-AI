@@ -1,433 +1,351 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { sendOTP, verifyOTP } from '../services/api';
 
 const ZONES = [
-  { label: 'Laxmi Nagar',     value: 'laxmi_nagar',    lat: 28.6273, lon: 77.2773 },
-  { label: 'Yamuna Bank',     value: 'yamuna_bank',     lat: 28.6200, lon: 77.2900 },
-  { label: 'Dwarka',          value: 'dwarka',          lat: 28.5921, lon: 77.0460 },
+  { label: 'Laxmi Nagar', value: 'laxmi_nagar', lat: 28.6273, lon: 77.2773 },
+  { label: 'Yamuna Bank', value: 'yamuna_bank', lat: 28.62, lon: 77.29 },
+  { label: 'Dwarka', value: 'dwarka', lat: 28.5921, lon: 77.046 },
   { label: 'Connaught Place', value: 'connaught_place', lat: 28.6315, lon: 77.2167 },
-  { label: 'Gurugram',        value: 'gurugram',        lat: 28.4595, lon: 77.0266 },
-  { label: 'Noida',           value: 'noida',           lat: 28.5355, lon: 77.3910 },
+  { label: 'Gurugram', value: 'gurugram', lat: 28.4595, lon: 77.0266 },
+  { label: 'Noida', value: 'noida', lat: 28.5355, lon: 77.391 },
 ];
+
 const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon'];
 const ONBOARDING_DRAFT_KEY = 'gigshield_onboarding_draft';
-const TIER_COLOR = { low: '#00E5A0', medium: '#FFB347', high: '#FF5C5C' };
-const TIER_BG    = { low: 'rgba(0,229,160,0.08)', medium: 'rgba(255,179,71,0.08)', high: 'rgba(255,92,92,0.08)' };
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
 
   .gs-screen {
-    background:
-      radial-gradient(circle at top left, rgba(79,140,255,0.14), transparent 30%),
-      radial-gradient(circle at 85% 20%, rgba(25,215,165,0.12), transparent 26%),
-      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
     min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-    position: relative;
-    overflow: hidden;
+    padding: 24px;
+    background:
+      radial-gradient(circle at top left, rgba(218, 93, 54, 0.12), transparent 24%),
+      radial-gradient(circle at bottom right, rgba(35, 89, 209, 0.1), transparent 20%),
+      linear-gradient(180deg, var(--bg-app) 0%, color-mix(in srgb, var(--bg-app) 90%, #000 10%) 100%);
   }
 
-  .gs-bg-orb1 {
-    position: fixed;
-    width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(25,215,165,0.09) 0%, transparent 70%);
-    border-radius: 50%;
-    top: -80px; right: -80px;
-    pointer-events: none;
-  }
-  .gs-bg-orb2 {
-    position: fixed;
-    width: 240px; height: 240px;
-    background: radial-gradient(circle, rgba(79,140,255,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    bottom: 80px; left: -60px;
-    pointer-events: none;
-  }
-  .gs-bg-grid {
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-  }
-
-  .gs-inner {
-    position: relative;
-    z-index: 1;
-    padding: 48px 24px 32px;
-    max-width: 420px;
+  .gs-wrap {
+    max-width: 1160px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    gap: 18px;
   }
 
-  .gs-logo {
+  .gs-stage,
+  .gs-aside {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 32px;
+    box-shadow: var(--shadow);
+  }
+
+  .gs-stage {
+    padding: 24px;
+  }
+
+  .gs-mark {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 40px;
+    gap: 12px;
+    margin-bottom: 24px;
   }
-  .gs-logo-icon {
-    width: 34px; height: 34px;
-    background: linear-gradient(135deg, #19d7a5, #4f8cff);
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    box-shadow: 0 10px 24px rgba(25,215,165,0.18);
-  }
-  .gs-logo-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: -0.3px;
-  }
-  .gs-logo-text span { color: #00E5A0; }
 
-  .gs-steps {
+  .gs-mark-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 34px;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff6ee;
+    font-family: var(--font-display);
+    font-weight: 700;
   }
-  .gs-step-dot {
-    height: 4px;
-    border-radius: 999px;
-    transition: all 0.3s ease;
-    background: rgba(255,255,255,0.1);
-  }
-  .gs-step-dot.active { background: #00E5A0; }
-  .gs-step-dot.done   { background: rgba(0,229,160,0.35); }
 
-  .gs-heading {
-    color: #fff;
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.8px;
-    margin-bottom: 8px;
-    line-height: 1.15;
+  .gs-mark-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
   }
-  .gs-subheading {
-    color: #8aa0b7;
-    font-size: 14px;
-    margin-bottom: 28px;
-    line-height: 1.5;
-  }
-  .gs-subheading b { color: #7A95AA; font-weight: 500; }
 
-  .gs-label {
-    display: block;
-    color: #92a6bb;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.8px;
+  .gs-mark-sub,
+  .gs-kicker,
+  .gs-label,
+  .gs-info-kicker {
+    color: var(--text-faint);
     text-transform: uppercase;
-    margin-bottom: 7px;
+    letter-spacing: 0.12em;
+    font-size: 0.68rem;
+  }
+
+  .gs-progress {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .gs-progress-step {
+    border-radius: 999px;
+    height: 8px;
+    background: color-mix(in srgb, var(--bg-ink) 12%, transparent);
+  }
+
+  .gs-progress-step.done {
+    background: color-mix(in srgb, var(--accent) 44%, transparent);
+  }
+
+  .gs-progress-step.active {
+    background: var(--accent);
+  }
+
+  .gs-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    line-height: 0.96;
+    letter-spacing: -0.06em;
+    margin: 10px 0 14px;
+    max-width: 12ch;
+  }
+
+  .gs-lead,
+  .gs-draft-copy,
+  .gs-info-copy,
+  .gs-preview-copy {
+    color: var(--text-muted);
+    line-height: 1.6;
   }
 
   .gs-draft {
-    border: 1px solid rgba(79,140,255,0.28);
-    background: rgba(79,140,255,0.08);
-    border-radius: 12px;
-    padding: 10px 12px;
-    color: #b9d5ff;
-    font-size: 12px;
-    margin-bottom: 14px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+    align-items: center;
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    padding: 14px;
+    margin-bottom: 18px;
   }
 
-  .gs-draft-btn {
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.08);
-    color: #eef6ff;
-    border-radius: 999px;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    padding: 5px 10px;
+  .gs-draft-btn,
+  .gs-chip,
+  .gs-link-btn,
+  .gs-btn {
+    border-radius: 16px;
     cursor: pointer;
+    font-weight: 700;
+    transition: transform 0.18s ease;
   }
 
-  .gs-phone-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .gs-prefix {
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    color: #a0b2c7;
-    font-size: 14px;
-    font-family: 'DM Mono', monospace;
-    white-space: nowrap;
-  }
-
-  .gs-input {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    color: #fff;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: 16px;
-    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-    outline: none;
-  }
-  .gs-input:focus {
-    border-color: rgba(25,215,165,0.34);
-    background: rgba(25,215,165,0.04);
-    box-shadow: 0 0 0 4px rgba(25,215,165,0.08);
-  }
-  .gs-input::placeholder { color: #41566d; }
-
-  .gs-input-mono {
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 3px;
-    font-size: 18px;
-    text-align: center;
-  }
-
-  .gs-select {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    color: #fff;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
-    margin-bottom: 16px;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234A6580' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
-  }
-  .gs-select option { background: #0D1B2A; }
-
-  .gs-platform-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  .gs-platform-chip {
+  .gs-draft-btn,
+  .gs-link-btn {
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--text);
     padding: 10px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    color: #90a4ba;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s ease;
-  }
-  .gs-platform-chip.selected {
-    border-color: rgba(25,215,165,0.35);
-    background: rgba(25,215,165,0.08);
-    color: #66f0c9;
   }
 
   .gs-btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: 14px;
     border: none;
-    background: linear-gradient(135deg, #19d7a5 0%, #2db7ff 100%);
-    color: #050E18;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-    letter-spacing: 0.2px;
-    box-shadow: 0 14px 28px rgba(25,215,165,0.18);
+    background: var(--accent);
+    color: #fff6ee;
+    padding: 12px 16px;
   }
-  .gs-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-  .gs-btn:active:not(:disabled) { transform: translateY(0); }
-  .gs-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .gs-link-btn {
-    width: 100%;
-    padding: 12px;
-    background: transparent;
-    border: none;
-    color: #8ea3bc;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    margin-top: 6px;
-    transition: color 0.2s;
+  .gs-draft-btn:hover,
+  .gs-chip:hover,
+  .gs-link-btn:hover,
+  .gs-btn:hover {
+    transform: translateY(-1px);
   }
-  .gs-link-btn:hover { color: #ffffff; }
+
+  .gs-form {
+    display: grid;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .gs-field {
+    display: grid;
+    gap: 8px;
+  }
+
+  .gs-phone-row {
+    display: grid;
+    grid-template-columns: 86px 1fr;
+    gap: 10px;
+  }
+
+  .gs-prefix,
+  .gs-input,
+  .gs-select {
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 13px 14px;
+    outline: none;
+  }
+
+  .gs-prefix {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+  }
+
+  .gs-input.mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.24em;
+    text-align: center;
+  }
+
+  .gs-platform-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .gs-chip {
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .gs-chip.selected {
+    background: var(--bg-ink);
+    color: var(--text-inverse);
+    border-color: transparent;
+  }
+
+  .gs-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
 
   .gs-error {
-    color: #FF5C5C;
-    font-size: 12px;
-    margin-bottom: 10px;
-    padding: 8px 12px;
-    background: rgba(255,92,92,0.08);
-    border-radius: 10px;
-    border-left: 2px solid #FF5C5C;
+    border-radius: 16px;
+    background: var(--danger-soft);
+    color: var(--danger);
+    padding: 12px 14px;
   }
 
-  .gs-demo-otp {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255,179,71,0.06);
-    border: 1px solid rgba(255,179,71,0.2);
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-bottom: 16px;
-  }
-  .gs-demo-otp-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #FFB347;
-    flex-shrink: 0;
-  }
-  .gs-demo-otp-text { color: #8A7040; font-size: 12px; }
-  .gs-demo-otp-code {
-    color: #FFB347;
-    font-family: 'DM Mono', monospace;
-    font-size: 15px;
-    font-weight: 500;
-    margin-left: auto;
-    letter-spacing: 2px;
-  }
-
-  .gs-divider {
-    height: 1px;
-    background: rgba(255,255,255,0.06);
-    margin: 20px 0;
-  }
-
-  /* Step 3 — plan card */
-  .gs-plan-card {
+  .gs-demo {
     border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+
+  .gs-demo-code {
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    letter-spacing: 0.3em;
+  }
+
+  .gs-aside {
     padding: 20px;
-    margin-bottom: 16px;
-    border: 1px solid;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 18px 44px rgba(0,0,0,0.18);
+    display: grid;
+    gap: 14px;
+    align-content: start;
   }
-  .gs-plan-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent);
+
+  .gs-preview-card,
+  .gs-info-card {
+    border-radius: 24px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
   }
-  .gs-plan-tier {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+
+  .gs-preview-card {
+    background: var(--bg-ink);
+    color: var(--text-inverse);
+    border-color: transparent;
   }
-  .gs-plan-tier::before {
-    content: '';
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
+
+  .gs-preview-title {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    line-height: 1.02;
+    margin: 8px 0 12px;
   }
-  .gs-plan-price {
-    font-size: 44px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: -2px;
-    line-height: 1;
-    margin-bottom: 4px;
-    font-family: 'DM Mono', monospace;
+
+  .gs-preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
   }
-  .gs-plan-price-unit {
-    font-size: 14px;
-    color: #8ea3bc;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 400;
-    margin-left: 2px;
+
+  .gs-preview-metric {
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
-  .gs-plan-subtitle {
-    color: #8ea3bc;
-    font-size: 12px;
-    margin-top: 4px;
+
+  .gs-preview-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin: 8px 0 2px;
   }
 
   .gs-info-list {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 14px;
-    overflow: hidden;
-    margin-bottom: 20px;
+    display: grid;
+    gap: 10px;
   }
-  .gs-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .gs-info-row:last-child { border-bottom: none; }
-  .gs-info-key {
-    color: #8ea3bc;
-    font-size: 13px;
-  }
-  .gs-info-val {
-    color: #fff;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  .gs-info-val.green { color: #00E5A0; }
 
-  .gs-trust-row {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 24px;
+  .gs-info-item {
+    border-radius: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    padding: 14px;
   }
-  .gs-trust-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .gs-trust-icon { font-size: 18px; }
-  .gs-trust-label { color: #7b91a8; font-size: 10px; letter-spacing: 0.5px; }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .gs-info-title {
+    font-weight: 700;
+    margin: 6px 0 4px;
   }
-  .gs-animate { animation: fadeUp 0.35s ease forwards; }
+
+  @media (max-width: 960px) {
+    .gs-wrap {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .gs-screen {
+      padding: 16px;
+    }
+
+    .gs-platform-grid,
+    .gs-preview-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .gs-phone-row {
+      grid-template-columns: 1fr;
+    }
+  }
 `;
 
-function StepDots({ step }) {
+function Progress({ step }) {
   return (
-    <div className="gs-steps">
-      {[1, 2, 3].map(i => (
+    <div className="gs-progress">
+      {[1, 2, 3].map((item) => (
         <div
-          key={i}
-          className={`gs-step-dot ${i === step ? 'active' : i < step ? 'done' : ''}`}
-          style={{ flex: i === step ? 3 : 1 }}
+          key={item}
+          className={`gs-progress-step ${item === step ? 'active' : item < step ? 'done' : ''}`}
         />
       ))}
     </div>
@@ -435,16 +353,22 @@ function StepDots({ step }) {
 }
 
 export default function Onboarding({ onComplete }) {
-  const [step,    setStep]    = useState(1);
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
+  const [error, setError] = useState('');
   const [hasDraft, setHasDraft] = useState(false);
-  const [form,    setForm]    = useState({
-    phone: '', otp: '', demoOtp: '', name: '',
-    platform: 'Zomato', zone: 'laxmi_nagar', avgDailyIncome: 800
-  });
   const [worker, setWorker] = useState(null);
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [form, setForm] = useState({
+    phone: '',
+    otp: '',
+    demoOtp: '',
+    name: '',
+    platform: 'Zomato',
+    zone: 'laxmi_nagar',
+    avgDailyIncome: 800,
+  });
+
+  const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   useEffect(() => {
     try {
@@ -458,32 +382,33 @@ export default function Onboarding({ onComplete }) {
         setStep(draft.step || 1);
       }
     } catch {
-      // ignore corrupted draft
+      // ignore corrupted drafts
     }
   }, []);
 
   useEffect(() => {
-    const payload = {
-      step,
-      form,
-      autoLoad: false,
-      ts: Date.now(),
-    };
-    localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(payload));
-  }, [step, form]);
+    localStorage.setItem(
+      ONBOARDING_DRAFT_KEY,
+      JSON.stringify({
+        step,
+        form,
+        autoLoad: false,
+        ts: Date.now(),
+      })
+    );
+  }, [form, step]);
 
   function resumeDraft() {
     try {
       const raw = localStorage.getItem(ONBOARDING_DRAFT_KEY);
       if (!raw) return;
       const draft = JSON.parse(raw);
-      if (!draft || typeof draft !== 'object') return;
       setForm((prev) => ({ ...prev, ...(draft.form || {}) }));
       setStep(draft.step || 1);
-      setError('');
       setHasDraft(false);
+      setError('');
     } catch {
-      // ignore corrupted draft
+      // ignore
     }
   }
 
@@ -493,218 +418,267 @@ export default function Onboarding({ onComplete }) {
   }
 
   async function handleSendOTP() {
-    if (form.phone.length !== 10) return setError('Enter a valid 10-digit number');
-    setLoading(true); setError('');
+    if (form.phone.length !== 10) {
+      setError('Enter a valid 10-digit number.');
+      return;
+    }
+    setLoading(true);
+    setError('');
     try {
-      const r = await sendOTP(form.phone);
-      set('demoOtp', r.demoOtp);
+      const response = await sendOTP(form.phone);
+      set('demoOtp', response.demoOtp);
       setStep(2);
-    } catch (e) { setError(e.message); }
-    setLoading(false);
+    } catch (eventError) {
+      setError(eventError.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleVerify() {
-    if (form.otp.length !== 6) return setError('Enter the 6-digit OTP');
-    setLoading(true); setError('');
+    if (form.otp.length !== 6) {
+      setError('Enter the 6-digit OTP.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
     try {
-      const zone = ZONES.find(z => z.value === form.zone);
-      const r = await verifyOTP({
-        phone: form.phone, otp: form.otp,
-        name: form.name || 'Worker', platform: form.platform,
-        zone: form.zone, zoneLat: zone?.lat || 28.6273,
-        zoneLon: zone?.lon || 77.2773, avgDailyIncome: form.avgDailyIncome
+      const zone = ZONES.find((item) => item.value === form.zone);
+      const response = await verifyOTP({
+        phone: form.phone,
+        otp: form.otp,
+        name: form.name || 'Worker',
+        platform: form.platform,
+        zone: form.zone,
+        zoneLat: zone?.lat || 28.6273,
+        zoneLon: zone?.lon || 77.2773,
+        avgDailyIncome: form.avgDailyIncome,
       });
-      setWorker(r.worker);
+      setWorker(response.worker);
       setStep(3);
-    } catch (e) { setError(e.message); }
-    setLoading(false);
+    } catch (eventError) {
+      setError(eventError.message);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  const selectedZone = useMemo(
+    () => ZONES.find((zone) => zone.value === form.zone) || ZONES[0],
+    [form.zone]
+  );
 
   return (
     <>
       <style>{css}</style>
       <div className="gs-screen">
-        <div className="gs-bg-orb1" />
-        <div className="gs-bg-orb2" />
-        <div className="gs-bg-grid" />
-
-        <div className="gs-inner">
-          {/* Logo */}
-          <div className="gs-logo">
-            <div className="gs-logo-icon">🛡️</div>
-            <div className="gs-logo-text">GigShield <span>AI</span></div>
-          </div>
-
-          <StepDots step={step} />
-
-          {/* ── STEP 1: Phone ── */}
-          {step === 1 && (
-            <div className="gs-animate">
-              <h1 className="gs-heading">Your income,<br />protected.</h1>
-              <p className="gs-subheading">Enter your mobile number to get started.</p>
-
-              {hasDraft && (
-                <div className="gs-draft">
-                  <span>You have a saved setup draft.</span>
-                  <button className="gs-draft-btn" onClick={resumeDraft}>Resume</button>
-                </div>
-              )}
-
-              <label className="gs-label">Mobile number</label>
-              <div className="gs-phone-row">
-                <div className="gs-prefix">+91</div>
-                <input
-                  className="gs-input"
-                  style={{ marginBottom: 0, flex: 1, fontFamily: "'DM Mono', monospace", letterSpacing: '1px' }}
-                  placeholder="98765 43210"
-                  maxLength={10}
-                  value={form.phone}
-                  onChange={e => set('phone', e.target.value.replace(/\D/g, ''))}
-                />
-              </div>
-
-              <div style={{ height: 8 }} />
-              <label className="gs-label">Platform</label>
-              <div className="gs-platform-grid">
-                {PLATFORMS.map(p => (
-                  <div
-                    key={p}
-                    className={`gs-platform-chip ${form.platform === p ? 'selected' : ''}`}
-                    onClick={() => set('platform', p)}
-                  >
-                    {p}
-                  </div>
-                ))}
-              </div>
-
-              {error && <div className="gs-error">{error}</div>}
-              <button className="gs-btn" onClick={handleSendOTP} disabled={loading}>
-                {loading ? 'Sending…' : 'Send OTP →'}
-              </button>
-
-              <div className="gs-trust-row">
-                {[['🔒','Secure'],['⚡','Instant'],['₹','Weekly']].map(([icon, label]) => (
-                  <div key={label} className="gs-trust-item">
-                    <span className="gs-trust-icon">{icon}</span>
-                    <span className="gs-trust-label">{label}</span>
-                  </div>
-                ))}
+        <div className="gs-wrap">
+          <section className="gs-stage">
+            <div className="gs-mark">
+              <div className="gs-mark-badge">GS</div>
+              <div>
+                <div className="gs-mark-title">GigShield</div>
+                <div className="gs-mark-sub">Weekly protection for field workers</div>
               </div>
             </div>
-          )}
 
-          {/* ── STEP 2: OTP + Details ── */}
-          {step === 2 && (
-            <div className="gs-animate">
-              <h1 className="gs-heading">Verify &amp;<br />set up profile.</h1>
-              <p className="gs-subheading">
-                OTP sent to <b>+91 {form.phone}</b>
-              </p>
+            <Progress step={step} />
 
-              {form.demoOtp && (
-                <div className="gs-demo-otp">
-                  <div className="gs-demo-otp-dot" />
-                  <span className="gs-demo-otp-text">Demo OTP</span>
-                  <span className="gs-demo-otp-code">{form.demoOtp}</span>
+            {step === 1 && (
+              <>
+                <div className="gs-kicker">Step 1</div>
+                <h1 className="gs-title">Start with your working number.</h1>
+                <p className="gs-lead">
+                  The first screen now feels more like a product intake than a hackathon landing page. We keep the flow short, but the visual system is tighter and the preview updates as you enter details.
+                </p>
+
+                {hasDraft && (
+                  <div className="gs-draft">
+                    <div className="gs-draft-copy">There’s a saved onboarding draft from an earlier session.</div>
+                    <button className="gs-draft-btn" onClick={resumeDraft}>Resume draft</button>
+                  </div>
+                )}
+
+                <div className="gs-form">
+                  <div className="gs-field">
+                    <label className="gs-label">Mobile number</label>
+                    <div className="gs-phone-row">
+                      <div className="gs-prefix">+91</div>
+                      <input
+                        className="gs-input"
+                        placeholder="9876543210"
+                        value={form.phone}
+                        maxLength={10}
+                        onChange={(event) => set('phone', event.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="gs-field">
+                    <label className="gs-label">Platform</label>
+                    <div className="gs-platform-grid">
+                      {PLATFORMS.map((platform) => (
+                        <button
+                          type="button"
+                          key={platform}
+                          className={`gs-chip ${form.platform === platform ? 'selected' : ''}`}
+                          onClick={() => set('platform', platform)}
+                        >
+                          {platform}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {error && <div className="gs-error">{error}</div>}
+
+                  <div className="gs-actions">
+                    <button className="gs-btn" onClick={handleSendOTP} disabled={loading}>
+                      {loading ? 'Sending OTP…' : 'Send OTP'}
+                    </button>
+                    {hasDraft && <button className="gs-link-btn" onClick={clearDraft}>Clear draft</button>}
+                  </div>
                 </div>
-              )}
+              </>
+            )}
 
-              <label className="gs-label">OTP</label>
-              <input
-                className={`gs-input gs-input-mono`}
-                placeholder="— — — — — —"
-                maxLength={6}
-                value={form.otp}
-                onChange={e => set('otp', e.target.value.replace(/\D/g, ''))}
-              />
+            {step === 2 && (
+              <>
+                <div className="gs-kicker">Step 2</div>
+                <h1 className="gs-title">Verify and map your working zone.</h1>
+                <p className="gs-lead">
+                  Once OTP is verified, GigShield uses your platform, zone, and daily income to return a live weekly premium and risk tier.
+                </p>
 
-              <div className="gs-divider" />
+                {form.demoOtp && (
+                  <div className="gs-demo">
+                    <div className="gs-info-kicker">Demo OTP</div>
+                    <div className="gs-demo-code">{form.demoOtp}</div>
+                  </div>
+                )}
 
-              <label className="gs-label">Full name</label>
-              <input
-                className="gs-input"
-                placeholder="Ravi Kumar"
-                value={form.name}
-                onChange={e => set('name', e.target.value)}
-              />
+                <div className="gs-form">
+                  <div className="gs-field">
+                    <label className="gs-label">OTP</label>
+                    <input
+                      className="gs-input mono"
+                      placeholder="123456"
+                      maxLength={6}
+                      value={form.otp}
+                      onChange={(event) => set('otp', event.target.value.replace(/\D/g, ''))}
+                    />
+                  </div>
 
-              <label className="gs-label">Delivery zone</label>
-              <select
-                className="gs-select"
-                value={form.zone}
-                onChange={e => set('zone', e.target.value)}
-              >
-                {ZONES.map(z => (
-                  <option key={z.value} value={z.value}>{z.label}</option>
-                ))}
-              </select>
+                  <div className="gs-field">
+                    <label className="gs-label">Full name</label>
+                    <input
+                      className="gs-input"
+                      placeholder="Ravi Kumar"
+                      value={form.name}
+                      onChange={(event) => set('name', event.target.value)}
+                    />
+                  </div>
 
-              <label className="gs-label">Avg daily earnings (₹)</label>
-              <input
-                className="gs-input"
-                type="number"
-                value={form.avgDailyIncome}
-                onChange={e => set('avgDailyIncome', parseInt(e.target.value) || 800)}
-              />
+                  <div className="gs-field">
+                    <label className="gs-label">Delivery zone</label>
+                    <select className="gs-select" value={form.zone} onChange={(event) => set('zone', event.target.value)}>
+                      {ZONES.map((zone) => (
+                        <option key={zone.value} value={zone.value}>{zone.label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {error && <div className="gs-error">{error}</div>}
-              <button className="gs-btn" onClick={handleVerify} disabled={loading}>
-                {loading ? 'Verifying…' : 'Create Account →'}
-              </button>
-              <button className="gs-link-btn" onClick={() => { setStep(1); setError(''); }}>
-                ← Change number
-              </button>
-            </div>
-          )}
+                  <div className="gs-field">
+                    <label className="gs-label">Average daily income</label>
+                    <input
+                      className="gs-input"
+                      type="number"
+                      value={form.avgDailyIncome}
+                      onChange={(event) => set('avgDailyIncome', parseInt(event.target.value, 10) || 800)}
+                    />
+                  </div>
 
-          {/* ── STEP 3: Plan ── */}
-          {step === 3 && worker && (
-            <div className="gs-animate">
-              <h1 className="gs-heading">Your plan<br />is ready.</h1>
-              <p className="gs-subheading">
-                Welcome, <b>{worker.name}</b>. AI has priced your weekly cover.
-              </p>
+                  {error && <div className="gs-error">{error}</div>}
 
-              <div
-                className="gs-plan-card"
-                style={{
-                  borderColor: TIER_COLOR[worker.premiumTier] + '33',
-                  background: TIER_BG[worker.premiumTier],
-                }}
-              >
-                <div className="gs-plan-tier" style={{ color: TIER_COLOR[worker.premiumTier] }}>
-                  {worker.premiumTier} risk zone
+                  <div className="gs-actions">
+                    <button className="gs-btn" onClick={handleVerify} disabled={loading}>
+                      {loading ? 'Verifying…' : 'Create account'}
+                    </button>
+                    <button className="gs-link-btn" onClick={() => { setStep(1); setError(''); }}>
+                      Change number
+                    </button>
+                  </div>
                 </div>
-                <div className="gs-plan-price">
-                  ₹{worker.weeklyPremium}
-                  <span className="gs-plan-price-unit">/week</span>
+              </>
+            )}
+
+            {step === 3 && worker && (
+              <>
+                <div className="gs-kicker">Step 3</div>
+                <h1 className="gs-title">Your weekly quote is ready.</h1>
+                <p className="gs-lead">
+                  The app has priced your cover and assigned a risk tier. From here, you’ll move into Policy Studio to compare the recommendation against other cover shapes.
+                </p>
+
+                <div className="gs-form">
+                  <div className="gs-info-card">
+                    <div className="gs-info-kicker">Quote summary</div>
+                    <div className="gs-info-title">{worker.name}, your current weekly price is ₹{worker.weeklyPremium}.</div>
+                    <div className="gs-info-copy">
+                      Zone: {worker.zone?.replace(/_/g, ' ')} • Risk score: {Math.round((worker.riskScore || 0) * 100)}% • Risk tier: {worker.premiumTier}
+                    </div>
+                  </div>
+
+                  <div className="gs-actions">
+                    <button className="gs-btn" onClick={() => { clearDraft(); onComplete(worker); }}>
+                      Continue to policy studio
+                    </button>
+                    <button className="gs-link-btn" onClick={clearDraft}>Clear draft</button>
+                  </div>
                 </div>
-                <div className="gs-plan-subtitle">Auto-deducted · Cancel anytime</div>
+              </>
+            )}
+          </section>
+
+          <aside className="gs-aside">
+            <div className="gs-preview-card">
+              <div className="gs-info-kicker">Live preview</div>
+              <div className="gs-preview-title">A cleaner first impression for GigShield.</div>
+              <div className="gs-preview-copy">
+                The redesign leans into an operations dashboard tone: sharper typography, quieter surfaces, and more useful information density.
               </div>
 
+              <div className="gs-preview-grid">
+                <div className="gs-preview-metric">
+                  <div className="gs-info-kicker">Zone</div>
+                  <div className="gs-preview-value" style={{ fontSize: '1.2rem' }}>{selectedZone.label}</div>
+                </div>
+                <div className="gs-preview-metric">
+                  <div className="gs-info-kicker">Daily income</div>
+                  <div className="gs-preview-value">₹{form.avgDailyIncome}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="gs-info-card">
+              <div className="gs-info-kicker">What changed</div>
               <div className="gs-info-list">
-                {[
-                  ['Zone',        worker.zone?.replace(/_/g, ' '), false],
-                  ['Risk score',  `${Math.round((worker.riskScore || 0) * 100)}%`, false],
-                  ['Coverage',    'Up to ₹850/day', true],
-                  ['Claim filing','Zero — fully automatic', true],
-                  ['Payout',      'Instant UPI transfer', true],
-                ].map(([k, v, green]) => (
-                  <div key={k} className="gs-info-row">
-                    <span className="gs-info-key">{k}</span>
-                    <span className={`gs-info-val ${green ? 'green' : ''}`}>{v}</span>
-                  </div>
-                ))}
+                <div className="gs-info-item">
+                  <div className="gs-info-title">Less generic styling</div>
+                  <div className="gs-info-copy">No more repeated glass cards and neon gradients on every screen.</div>
+                </div>
+                <div className="gs-info-item">
+                  <div className="gs-info-title">Stronger product framing</div>
+                  <div className="gs-info-copy">Screens now read like an insurance operations tool rather than a visual concept demo.</div>
+                </div>
+                <div className="gs-info-item">
+                  <div className="gs-info-title">More useful features</div>
+                  <div className="gs-info-copy">You now get plan comparison, shift briefs, and a cleaner claims workflow.</div>
+                </div>
               </div>
-
-              <button className="gs-btn" onClick={() => { clearDraft(); onComplete(worker); }}>
-                Buy This Week's Plan →
-              </button>
-              <button className="gs-link-btn" onClick={clearDraft}>
-                Clear saved draft
-              </button>
             </div>
-          )}
+          </aside>
         </div>
       </div>
     </>

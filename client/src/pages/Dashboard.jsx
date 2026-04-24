@@ -1,801 +1,794 @@
-import React, { useState, useEffect } from 'react';
-import { getPolicy, getClaims } from '../services/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { getClaims, getPolicy } from '../services/api';
 
-const wColor = w => w < 50 ? '#FF5C5C' : w < 70 ? '#FFB347' : '#00E5A0';
-const wLabel = w => w < 50 ? 'Disruption active — claim processing' : w < 70 ? 'Moderate risk conditions' : 'Safe to work';
-const wBg    = w => w < 50 ? 'rgba(255,92,92,0.06)' : w < 70 ? 'rgba(255,179,71,0.06)' : 'rgba(0,229,160,0.06)';
+const SCENARIO_BRIEFS = [
+  { label: 'Weather', value: 'Heavy rain likely after 6 PM', tone: 'warning' },
+  { label: 'Traffic', value: 'Peak corridor congestion building', tone: 'danger' },
+  { label: 'Air quality', value: 'AQI expected to remain elevated', tone: 'warning' },
+];
+
+function getStatusTone(score) {
+  if (score < 50) return 'danger';
+  if (score < 70) return 'warning';
+  return 'success';
+}
+
+function getScoreMessage(score) {
+  if (score < 50) return 'Shift risk is elevated. Expect auto-claim conditions to trigger faster.';
+  if (score < 70) return 'Mixed conditions. Shorter shifts and tighter route selection are safer.';
+  return 'Conditions are stable. Coverage remains active if the zone worsens.';
+}
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
   .db-screen {
+    min-height: 100%;
+    padding: 24px;
     background:
-      radial-gradient(circle at top right, rgba(25,215,165,0.12), transparent 28%),
-      radial-gradient(circle at 15% 20%, rgba(79,140,255,0.14), transparent 24%),
-      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-    padding: 0 0 24px;
-    position: relative;
+      linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 84%, transparent) 0%, transparent 100%);
   }
 
-  .db-bg-orb {
-    position: fixed;
-    width: 280px; height: 280px;
-    background: radial-gradient(circle, rgba(25,215,165,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    top: -60px; right: -60px;
-    pointer-events: none;
-    z-index: 0;
+  .db-stack {
+    display: grid;
+    gap: 16px;
   }
 
-  .db-header {
-    position: relative;
-    z-index: 1;
-    padding: 52px 20px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-  .db-greeting { color: #8ea3bc; font-size: 12px; margin-bottom: 3px; letter-spacing: 0.3px; }
-  .db-name     { color: #fff; font-size: 20px; font-weight: 600; letter-spacing: -0.4px; }
-
-  .db-avatar {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(25,215,165,0.16), rgba(79,140,255,0.12));
-    border: 1px solid rgba(25,215,165,0.22);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 600;
-    color: #66f0c9;
+  .db-hero,
+  .db-panel,
+  .db-list,
+  .db-brief,
+  .db-checklist {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
   }
 
-  .db-scroll {
-    position: relative; z-index: 1;
-    padding: 0 16px;
+  .db-hero {
+    padding: 22px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+    gap: 16px;
   }
 
-  /* ── Policy Banner ── */
-  .db-policy-active {
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 12px;
-    background: linear-gradient(180deg, rgba(25,215,165,0.08), rgba(255,255,255,0.03));
-    border: 1px solid rgba(25,215,165,0.16);
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 16px 34px rgba(0,0,0,0.14);
-  }
-  .db-policy-active::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0,229,160,0.4), transparent);
-  }
-  .db-policy-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-  }
-  .db-policy-tag {
-    font-size: 10px;
-    font-weight: 600;
-    color: #66f0c9;
-    letter-spacing: 1px;
+  .db-kicker,
+  .db-section-kicker,
+  .db-card-kicker {
+    color: var(--text-faint);
     text-transform: uppercase;
-    margin-bottom: 4px;
+    letter-spacing: 0.12em;
+    font-size: 0.68rem;
   }
-  .db-policy-zone {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: -0.2px;
+
+  .db-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 3.3rem);
+    line-height: 0.96;
+    letter-spacing: -0.06em;
+    margin: 10px 0 12px;
+    max-width: 11ch;
   }
-  .db-policy-expiry {
-    color: #8ea3bc;
-    font-size: 11px;
-    margin-top: 2px;
+
+  .db-lead {
+    color: var(--text-muted);
+    max-width: 58ch;
+    line-height: 1.55;
+    margin-bottom: 18px;
   }
-  .db-live-pill {
-    background: rgba(25,215,165,0.12);
-    border: 1px solid rgba(25,215,165,0.24);
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 10px;
-    color: #66f0c9;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    display: flex; align-items: center; gap: 5px;
+
+  .db-hero-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
-  .db-live-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: #00E5A0;
-    animation: pulse 1.5s infinite;
+
+  .db-btn,
+  .db-outline-btn,
+  .db-mini-btn {
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.8); }
+
+  .db-btn:hover,
+  .db-outline-btn:hover,
+  .db-mini-btn:hover {
+    transform: translateY(-1px);
   }
-  .db-policy-divider {
-    height: 1px;
-    background: rgba(255,255,255,0.05);
-    margin: 12px 0;
+
+  .db-btn {
+    border: none;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #fff6ee;
+    padding: 12px 16px;
+    font-weight: 700;
   }
-  .db-policy-row {
+
+  .db-outline-btn {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 12px 16px;
+    font-weight: 700;
+  }
+
+  .db-risk-card {
+    border-radius: 22px;
+    background: var(--bg-ink);
+    color: var(--text-inverse);
+    padding: 18px;
+    display: grid;
+    gap: 14px;
+  }
+
+  .db-risk-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .db-risk-score {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    line-height: 0.95;
+  }
+
+  .db-risk-score span {
+    font-size: 1rem;
+    opacity: 0.7;
+  }
+
+  .db-tone-pill {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+  }
+
+  .db-tone-pill.success {
+    background: var(--success-soft);
+    color: var(--success);
+    border-color: color-mix(in srgb, var(--success) 28%, transparent);
+  }
+
+  .db-tone-pill.warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+  }
+
+  .db-tone-pill.danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+  }
+
+  .db-risk-card .db-tone-pill.success,
+  .db-risk-card .db-tone-pill.warning,
+  .db-risk-card .db-tone-pill.danger {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .db-risk-text {
+    color: rgba(248, 244, 237, 0.78);
+    line-height: 1.55;
+  }
+
+  .db-risk-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+  }
+
+  .db-risk-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ea8058 0%, #f3d26a 50%, #63ca99 100%);
+  }
+
+  .db-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+    gap: 16px;
+  }
+
+  .db-panel,
+  .db-list,
+  .db-brief,
+  .db-checklist {
+    padding: 18px;
+  }
+
+  .db-panel-head,
+  .db-list-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .db-panel-title,
+  .db-list-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
     margin-top: 6px;
   }
-  .db-policy-row-key { color: #3A5570; font-size: 12px; }
-  .db-policy-row-val { color: #fff; font-size: 13px; font-weight: 500; }
-  .db-policy-row-val.green { color: #00E5A0; }
 
-  .db-no-policy {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    margin-bottom: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-  }
-  .db-no-policy-title { color: #fff; font-size: 15px; font-weight: 500; margin-bottom: 4px; }
-  .db-no-policy-sub   { color: #8ea3bc; font-size: 12px; margin-bottom: 14px; }
-
-  .db-btn-green {
-    width: 100%;
-    padding: 13px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(135deg, #19d7a5 0%, #2db7ff 100%);
-    color: #050E18;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
-  }
-  .db-btn-green:hover { opacity: 0.9; transform: translateY(-1px); }
-  .db-btn-green:active { transform: translateY(0); }
-
-  /* ── Workability Card ── */
-  .db-w-card {
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 12px;
-    border: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-    transition: background 0.5s;
-  }
-  .db-w-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 12px;
-  }
-  .db-w-label { color: #8ea3bc; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .db-w-score {
-    font-family: 'DM Mono', monospace;
-    font-size: 36px;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: -1px;
-  }
-  .db-w-unit { font-size: 13px; color: #8ea3bc; font-weight: 400; margin-left: 1px; }
-  .db-w-bar-track {
-    height: 5px;
-    border-radius: 3px;
-    background: rgba(255,255,255,0.08);
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .db-w-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.6s ease, background 0.5s;
-  }
-  .db-w-status { font-size: 12px; }
-
-  /* ── Stats Grid ── */
-  .db-stats {
+  .db-policy-grid,
+  .db-stats-grid,
+  .db-brief-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
   }
-  .db-stat-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 14px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-  .db-stat-label { color: #8ea3bc; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
-  .db-stat-value {
-    font-family: 'DM Mono', monospace;
-    font-size: 24px;
-    font-weight: 500;
-    color: #fff;
-    letter-spacing: -0.5px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .db-stat-sub { font-size: 10px; color: #8ea3bc; }
-  .db-stat-sub.green { color: #66f0c9; }
 
-  .db-reco-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
+  .db-policy-grid,
+  .db-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .db-stat-card,
+  .db-policy-card,
+  .db-brief-item {
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
     padding: 14px;
-    margin-bottom: 12px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
   }
-  .db-reco-head {
-    color: #8ea3bc;
-    font-size: 10px;
-    letter-spacing: 0.7px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+
+  .db-stat-value,
+  .db-policy-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    letter-spacing: -0.05em;
+    margin: 8px 0 4px;
   }
-  .db-reco-list {
-    display: grid;
-    gap: 8px;
-  }
-  .db-reco-item {
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 11px;
-    background: rgba(255,255,255,0.03);
-    padding: 10px 11px;
-    color: #d2e2f3;
-    font-size: 12px;
+
+  .db-stat-meta,
+  .db-policy-meta,
+  .db-brief-copy {
+    color: var(--text-muted);
+    font-size: 0.9rem;
     line-height: 1.45;
   }
 
-  /* ── Claim Card ── */
-  .db-claim-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
+  .db-policy-empty {
+    border: 1px dashed var(--line-strong);
+    border-radius: 18px;
+    padding: 18px;
+    background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  }
+
+  .db-policy-empty h3 {
+    margin: 8px 0 6px;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+  }
+
+  .db-policy-empty p {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .db-list-body {
+    display: grid;
+    gap: 10px;
+  }
+
+  .db-claim-row {
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--bg-elevated);
     padding: 14px;
-    margin-bottom: 12px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-  .db-claim-header { color: #8ea3bc; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 12px; }
-  .db-claim-row { display: flex; justify-content: space-between; align-items: center; }
-  .db-claim-type { color: #fff; font-size: 13px; font-weight: 500; text-transform: capitalize; margin-bottom: 2px; }
-  .db-claim-date { color: #8ea3bc; font-size: 11px; }
-  .db-claim-amount { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; }
-
-  /* ── Simulate Button ── */
-  .db-sim-btn {
-    width: 100%;
-    padding: 13px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,187,85,0.22);
-    background: rgba(255,187,85,0.06);
-    color: #ffcf7a;
-    font-size: 13px;
-    font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    margin-bottom: 12px;
-    transition: background 0.2s, border-color 0.2s;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-  }
-  .db-sim-btn:hover {
-    background: rgba(255,187,85,0.09);
-    border-color: rgba(255,187,85,0.34);
-  }
-
-  .db-section-title {
-    color: #8ea3bc;
-    font-size: 10px;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .db-section-head {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    gap: 12px;
+    align-items: center;
   }
-  .db-section-link {
+
+  .db-claim-type {
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-transform: capitalize;
+  }
+
+  .db-claim-meta {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+
+  .db-claim-right {
+    text-align: right;
+  }
+
+  .db-claim-amount {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .db-mini-btn {
     border: none;
     background: transparent;
-    color: #66f0c9;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
+    color: var(--accent);
+    font-weight: 700;
     padding: 0;
   }
 
-  .db-claims-list {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 6px 12px;
-    margin-bottom: 12px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+  .db-brief-grid {
+    grid-template-columns: 1fr;
   }
-  .db-claims-item {
+
+  .db-brief-item {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
-    align-items: center;
+    gap: 12px;
+  }
+
+  .db-brief-label {
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .db-checklist {
+    display: grid;
     gap: 10px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .db-claims-item:last-child { border-bottom: none; }
-  .db-claims-main { min-width: 0; }
-  .db-claims-type {
-    color: #fff;
-    font-size: 13px;
-    font-weight: 500;
-    text-transform: capitalize;
-    margin-bottom: 2px;
-  }
-  .db-claims-meta {
-    color: #8ea3bc;
-    font-size: 11px;
-  }
-  .db-claims-right {
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .db-claims-amt {
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    font-weight: 500;
-    margin-bottom: 3px;
-  }
-  .db-claims-status {
-    border: 1px solid;
-    border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 9px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    display: inline-block;
-    font-weight: 600;
   }
 
-  .db-empty-claims {
-    border: 1px dashed rgba(255,255,255,0.16);
-    border-radius: 12px;
+  .db-check-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
     padding: 14px;
-    margin-bottom: 12px;
-    color: #8ea3bc;
-    font-size: 12px;
-    text-align: center;
   }
 
-  .db-loading {
-    background: linear-gradient(180deg, #050b14 0%, #07111f 100%);
-    min-height: 100vh;
+  .db-check-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #8ea3bc;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    letter-spacing: 0.5px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .db-check-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .db-check-copy {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .db-loading {
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 40px;
+    color: var(--text-muted);
   }
 
   .db-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(2, 8, 16, 0.74);
-    backdrop-filter: blur(3px);
+    background: rgba(15, 19, 26, 0.38);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 18px;
-    z-index: 30;
+    z-index: 60;
   }
+
   .db-modal {
-    width: min(420px, 100%);
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.09);
-    background: linear-gradient(180deg, rgba(8,18,32,0.98) 0%, rgba(7,14,26,0.98) 100%);
-    box-shadow: 0 18px 48px rgba(0,0,0,0.42);
-    overflow: hidden;
+    width: min(460px, 100%);
+    background: var(--bg-card-strong);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: var(--shadow);
   }
-  .db-modal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+
+  .db-modal h3 {
+    font-family: var(--font-display);
+    margin: 10px 0 8px;
+    font-size: 1.4rem;
   }
-  .db-modal-title {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.2px;
+
+  .db-modal p {
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0 0 14px;
   }
-  .db-modal-badge {
-    font-size: 10px;
-    color: #FFB347;
-    border: 1px solid rgba(255,179,71,0.28);
-    background: rgba(255,179,71,0.08);
-    border-radius: 999px;
-    padding: 2px 8px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    font-weight: 600;
-  }
-  .db-modal-body { padding: 14px 16px 16px; }
-  .db-modal-text {
-    color: #b5c4d4;
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 12px;
-  }
+
   .db-modal-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
-    margin-bottom: 14px;
-  }
-  .db-modal-metric {
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 12px;
-    padding: 10px;
-    background: rgba(255,255,255,0.02);
-  }
-  .db-modal-metric-k {
-    color: #8ea3bc;
-    font-size: 10px;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    margin-bottom: 5px;
-  }
-  .db-modal-metric-v {
-    color: #fff;
-    font-family: 'DM Mono', monospace;
-    font-size: 18px;
-    letter-spacing: -0.3px;
-  }
-  .db-modal-actions { display: flex; justify-content: flex-end; }
-  .db-modal-btn {
-    border: none;
-    border-radius: 10px;
-    padding: 9px 16px;
-    background: linear-gradient(135deg, #19d7a5 0%, #2db7ff 100%);
-    color: #06101C;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-    cursor: pointer;
+    margin-bottom: 16px;
   }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .db-modal-card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--bg-elevated);
+    padding: 12px;
   }
-  .db-animate { animation: fadeUp 0.3s ease forwards; }
-  .db-animate-2 { animation: fadeUp 0.3s 0.08s ease both; }
-  .db-animate-3 { animation: fadeUp 0.3s 0.16s ease both; }
-  .db-animate-4 { animation: fadeUp 0.3s 0.24s ease both; }
+
+  .db-modal-card span {
+    display: block;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.68rem;
+    margin-bottom: 6px;
+  }
+
+  .db-modal-card strong {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 920px) {
+    .db-hero,
+    .db-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .db-screen {
+      padding: 16px;
+    }
+
+    .db-policy-grid,
+    .db-stats-grid,
+    .db-modal-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .db-claim-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .db-claim-right {
+      text-align: left;
+    }
+  }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, showHeader = true }) {
-  const [policy,  setPolicy]  = useState(null);
-  const [claims,  setClaims]  = useState([]);
-  const [wScore,  setWScore]  = useState(null);
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
+  const [policy, setPolicy] = useState(null);
+  const [claims, setClaims] = useState([]);
+  const [wScore, setWScore] = useState(null);
   const [loading, setLoading] = useState(true);
   const [simming, setSimming] = useState(false);
   const [notice, setNotice] = useState(null);
 
   useEffect(() => {
-    if (notice?.type !== 'disruption') return;
-    const t = setTimeout(() => setNotice(null), 1500);
-    return () => clearTimeout(t);
-  }, [notice]);
+    if (!worker?._id) return undefined;
 
-  useEffect(() => {
     async function load() {
       try {
-        const [pr, cr] = await Promise.all([
+        const [policyRes, claimsRes] = await Promise.all([
           getPolicy(worker._id),
-          getClaims(worker._id)
+          getClaims(worker._id),
         ]);
-        setPolicy(pr.policy);
-        setClaims(cr.claims || []);
-        const wr = await fetch(
+        setPolicy(policyRes.policy || null);
+        setClaims(claimsRes.claims || []);
+
+        const workabilityRes = await fetch(
           `http://localhost:8000/workability?lat=${worker.zoneLat || 28.6273}&lon=${worker.zoneLon || 77.2773}&zone=${worker.zone}`
         );
-        const wd = await wr.json();
-        setWScore(wd.workabilityScore);
+        const workabilityData = await workabilityRes.json();
+        setWScore(workabilityData.workabilityScore ?? 72);
       } catch {
-        setWScore(75);
+        setWScore(72);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
+
     load();
-    const t = setInterval(load, 60000);
-    return () => clearInterval(t);
-  }, [worker._id]);
+    const timer = setInterval(load, 60000);
+    return () => clearInterval(timer);
+  }, [worker?._id, worker?.zone, worker?.zoneLat, worker?.zoneLon]);
 
   async function handleSimulate() {
     setSimming(true);
     try {
       const res = await fetch('http://127.0.0.1:8000/workability/simulate?rainfall_mm=120&temp_c=42&aqi=450', {
-        method: 'POST'
+        method: 'POST',
       });
       if (!res.ok) throw new Error('simulate_failed');
       const data = await res.json();
-      const score = data.workabilityScore ?? 20;
-      const payout = data.payoutPercent ?? 0;
-      setWScore(score);
+      setWScore(data.workabilityScore ?? 20);
       setNotice({
         type: 'disruption',
-        title: 'Disruption detected',
-        message: 'Severe conditions were simulated. Claim processing can be triggered automatically when this state is live.',
-        score,
-        payout
+        title: 'Stress test complete',
+        message: 'The engine simulated severe conditions. If this pattern appears live, GigShield can auto-generate a claim.',
+        score: data.workabilityScore ?? 20,
+        payout: data.payoutPercent ?? 0,
       });
     } catch {
       setNotice({
         type: 'error',
-        title: 'AI engine unavailable',
-        message: 'Could not reach FastAPI on port 8000. Please ensure the AI engine is running.',
-        score: null,
-        payout: null
+        title: 'Engine unavailable',
+        message: 'The AI engine on port 8000 could not be reached, so the simulation could not run.',
       });
+    } finally {
+      setSimming(false);
     }
-    setSimming(false);
   }
+
+  const paidClaims = claims.filter((claim) => claim.status === 'paid');
+  const pendingClaims = claims.filter((claim) => claim.status !== 'paid' && claim.status !== 'rejected');
+  const totalPaid = paidClaims.reduce((sum, claim) => sum + (claim.payoutAmount || 0), 0);
+  const recentClaims = claims.slice(0, 4);
+  const scoreTone = getStatusTone(wScore ?? 72);
+
+  const readinessItems = useMemo(() => {
+    const zoneName = worker?.zone?.replace(/_/g, ' ') || 'your zone';
+    return [
+      {
+        title: 'Policy status',
+        copy: policy ? `Protected in ${zoneName} until ${new Date(policy.endDate).toLocaleDateString('en-IN')}.` : 'No active policy detected for the current cycle.',
+      },
+      {
+        title: 'Claims queue',
+        copy: pendingClaims.length > 0 ? `${pendingClaims.length} claim(s) are still being reviewed.` : 'No claims are currently waiting for verification.',
+      },
+      {
+        title: 'Field note',
+        copy: (wScore ?? 72) < 60 ? 'Keep routes short and avoid low-visibility corridors this evening.' : 'Current conditions support a normal shift with routine caution.',
+      },
+    ];
+  }, [pendingClaims.length, policy, wScore, worker?.zone]);
 
   if (loading) {
     return (
       <>
         <style>{css}</style>
-        <div className="db-loading">Loading dashboard…</div>
+        <div className="db-loading">Loading live operations view…</div>
       </>
     );
   }
-
-  const paid  = claims.filter(c => c.status === 'paid');
-  const pending = claims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
-  const total = paid.reduce((s, c) => s + (c.payoutAmount || 0), 0);
-  const color = wScore !== null ? wColor(wScore) : '#3A5570';
-  const recentClaims = claims.slice(0, 3);
-  const recommendations = [
-    !policy
-      ? `Activate this week’s policy to keep earnings protected in ${worker.zone?.replace(/_/g, ' ') || 'your zone'}.`
-      : `Coverage is active with ${policy.daysLeft ?? 0} day(s) left—renew before expiry to avoid protection gaps.`,
-    wScore !== null && wScore < 60
-      ? 'Workability is low right now. Prioritize safer routes and watch for trigger alerts.'
-      : 'Workability is stable. Keep checking live score before peak hours.',
-    pending.length > 0
-      ? `${pending.length} claim(s) are under verification—payout updates will appear automatically.`
-      : 'No pending claims currently. You are fully up to date.',
-  ].slice(0, 2);
 
   return (
     <>
       <style>{css}</style>
       <div className="db-screen">
-        <div className="db-bg-orb" />
-
-        {/* Header */}
-        {showHeader && (
-          <div className="db-header db-animate">
+        <div className="db-stack">
+          <section className="db-hero">
             <div>
-              <div className="db-greeting">Good day,</div>
-              <div className="db-name">{worker.name}</div>
-            </div>
-            <div className="db-avatar">{worker.name?.[0]?.toUpperCase()}</div>
-          </div>
-        )}
-
-        <div className="db-scroll">
-
-          {/* Policy Banner */}
-          <div className="db-animate-2">
-            {policy ? (
-              <div className="db-policy-active">
-                <div className="db-policy-top">
-                  <div>
-                    <div className="db-policy-tag">Active coverage</div>
-                    <div className="db-policy-zone">
-                      {worker.zone?.replace(/_/g, ' ')} · {policy.riskTier} risk
-                    </div>
-                    <div className="db-policy-expiry">
-                      Expires {new Date(policy.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {policy.daysLeft}d left
-                    </div>
-                  </div>
-                  <div className="db-live-pill">
-                    <div className="db-live-dot" /> LIVE
-                  </div>
-                </div>
-                <div className="db-policy-divider" />
-                <div className="db-policy-row">
-                  <span className="db-policy-row-key">Weekly premium</span>
-                  <span className="db-policy-row-val">₹{policy.weeklyPremium}/week</span>
-                </div>
-                <div className="db-policy-row" style={{ marginTop: 6 }}>
-                  <span className="db-policy-row-key">Max payout</span>
-                  <span className="db-policy-row-val green">₹{policy.coverageAmount}/day</span>
-                </div>
-              </div>
-            ) : (
-              <div className="db-no-policy">
-                <div className="db-no-policy-title">No active policy</div>
-                <div className="db-no-policy-sub">Buy this week's plan to get covered</div>
-                <button className="db-btn-green" onClick={onBuyPolicy}>
-                  Buy Plan — ₹{worker.weeklyPremium}/week
+              <div className="db-kicker">Live desk</div>
+              <h1 className="db-title">Cover that feels like part of the shift.</h1>
+              <p className="db-lead">
+                GigShield watches zone conditions, keeps your policy status visible, and helps you decide whether to stay on the road or scale back before things get messy.
+              </p>
+              <div className="db-hero-actions">
+                <button className="db-btn" onClick={policy ? onOpenClaims : onBuyPolicy}>
+                  {policy ? 'Review claim activity' : 'Activate cover'}
+                </button>
+                <button className="db-outline-btn" onClick={handleSimulate} disabled={simming}>
+                  {simming ? 'Running test…' : 'Run disruption simulation'}
                 </button>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Workability Score */}
-          {wScore !== null && (
-            <div className="db-w-card db-animate-3" style={{ background: wBg(wScore), borderColor: color + '22' }}>
-              <div className="db-w-top">
+            <div className="db-risk-card">
+              <div className="db-risk-top">
                 <div>
-                  <div className="db-w-label">Live workability</div>
+                  <div className="db-card-kicker">Workability index</div>
+                  <div className="db-risk-score">{wScore ?? 72}<span>/100</span></div>
                 </div>
-                <div className="db-w-score" style={{ color }}>
-                  {wScore}<span className="db-w-unit">/100</span>
+                <span className={`db-tone-pill ${scoreTone}`}>{scoreTone === 'success' ? 'Stable' : scoreTone === 'warning' ? 'Watch' : 'Critical'}</span>
+              </div>
+              <div className="db-risk-bar">
+                <div className="db-risk-fill" style={{ width: `${wScore ?? 72}%` }} />
+              </div>
+              <div className="db-risk-text">{getScoreMessage(wScore ?? 72)}</div>
+            </div>
+          </section>
+
+          <section className="db-grid">
+            <div className="db-panel">
+              <div className="db-panel-head">
+                <div>
+                  <div className="db-section-kicker">Coverage status</div>
+                  <div className="db-panel-title">Policy snapshot</div>
+                </div>
+                <span className={`db-tone-pill ${policy ? 'success' : 'warning'}`}>
+                  {policy ? 'Active' : 'Needs action'}
+                </span>
+              </div>
+
+              {policy ? (
+                <div className="db-policy-grid">
+                  <div className="db-policy-card">
+                    <div className="db-card-kicker">Weekly premium</div>
+                    <div className="db-policy-value">₹{policy.weeklyPremium}</div>
+                    <div className="db-policy-meta">Current billed amount for this protection cycle.</div>
+                  </div>
+                  <div className="db-policy-card">
+                    <div className="db-card-kicker">Daily cover</div>
+                    <div className="db-policy-value">₹{policy.coverageAmount}</div>
+                    <div className="db-policy-meta">Maximum payout available on disruption days.</div>
+                  </div>
+                  <div className="db-policy-card">
+                    <div className="db-card-kicker">Zone</div>
+                    <div className="db-policy-value" style={{ fontSize: '1.2rem' }}>{worker?.zone?.replace(/_/g, ' ')}</div>
+                    <div className="db-policy-meta">{policy.riskTier} risk tier with live monitoring enabled.</div>
+                  </div>
+                  <div className="db-policy-card">
+                    <div className="db-card-kicker">Renews / expires</div>
+                    <div className="db-policy-value">{policy.daysLeft}d</div>
+                    <div className="db-policy-meta">Coverage window ends on {new Date(policy.endDate).toLocaleDateString('en-IN')}.</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="db-policy-empty">
+                  <div className="db-section-kicker">No active protection</div>
+                  <h3>This shift cycle is uncovered.</h3>
+                  <p>Open Policy Studio to compare your cover and turn protection back on before the next disruption window.</p>
+                  <button className="db-btn" onClick={onBuyPolicy}>Open Policy Studio</button>
+                </div>
+              )}
+            </div>
+
+            <div className="db-panel">
+              <div className="db-panel-head">
+                <div>
+                  <div className="db-section-kicker">Numbers</div>
+                  <div className="db-panel-title">Protection metrics</div>
                 </div>
               </div>
-              <div className="db-w-bar-track">
-                <div
-                  className="db-w-bar-fill"
-                  style={{ width: `${wScore}%`, background: color }}
-                />
+
+              <div className="db-stats-grid">
+                <div className="db-stat-card">
+                  <div className="db-card-kicker">Paid out</div>
+                  <div className="db-stat-value">₹{totalPaid.toLocaleString('en-IN')}</div>
+                  <div className="db-stat-meta">Claims received this cycle.</div>
+                </div>
+                <div className="db-stat-card">
+                  <div className="db-card-kicker">Claims paid</div>
+                  <div className="db-stat-value">{paidClaims.length}</div>
+                  <div className="db-stat-meta">Completed automatic payouts.</div>
+                </div>
+                <div className="db-stat-card">
+                  <div className="db-card-kicker">In review</div>
+                  <div className="db-stat-value">{pendingClaims.length}</div>
+                  <div className="db-stat-meta">Claim(s) still being verified.</div>
+                </div>
+                <div className="db-stat-card">
+                  <div className="db-card-kicker">Tier</div>
+                  <div className="db-stat-value" style={{ fontSize: '1.2rem' }}>{worker?.premiumTier || 'Pending'}</div>
+                  <div className="db-stat-meta">Risk tier linked to your home zone.</div>
+                </div>
               </div>
-              <div className="db-w-status" style={{ color }}>{wLabel(wScore)}</div>
             </div>
-          )}
+          </section>
 
-          {/* Stats */}
-          <div className="db-stats db-animate-3">
-            <div className="db-stat-card">
-              <div className="db-stat-label">Earnings protected</div>
-              <div className="db-stat-value">₹{total.toLocaleString('en-IN')}</div>
-              <div className="db-stat-sub">this month</div>
-            </div>
-            <div className="db-stat-card">
-              <div className="db-stat-label">Claims paid</div>
-              <div className="db-stat-value">{paid.length}</div>
-              <div className="db-stat-sub green">auto-approved</div>
-            </div>
-          </div>
-
-          <div className="db-reco-card db-animate-3">
-            <div className="db-reco-head">Smart recommendations</div>
-            <div className="db-reco-list">
-              {recommendations.map((item) => (
-                <div key={item} className="db-reco-item">{item}</div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Claims */}
-          <div className="db-animate-4" style={{ marginTop: 8 }}>
-            <div className="db-section-head">
-              <div className="db-section-title" style={{ marginBottom: 0 }}>Recent claim activity</div>
-              <button className="db-section-link" onClick={onOpenClaims}>View all</button>
-            </div>
-
-            {recentClaims.length === 0 ? (
-              <div className="db-empty-claims">
-                No claims yet. You’re covered—claims will appear automatically during disruptions.
+          <section className="db-grid">
+            <div className="db-list">
+              <div className="db-list-head">
+                <div>
+                  <div className="db-section-kicker">Activity</div>
+                  <div className="db-list-title">Recent claim movement</div>
+                </div>
+                <button className="db-mini-btn" onClick={onOpenClaims}>See all claims</button>
               </div>
-            ) : (
-              <div className="db-claims-list">
-                {recentClaims.map((claim, index) => {
-                  const isPaid = claim.status === 'paid';
-                  const isRejected = claim.status === 'rejected';
-                  const statusColor = isPaid ? '#00E5A0' : isRejected ? '#FF5C5C' : '#FFB347';
-                  return (
-                    <div className="db-claims-item" key={claim._id || index}>
-                      <div className="db-claims-main">
-                        <div className="db-claims-type">{claim.triggerType?.replace(/_/g, ' ') || 'Disruption event'}</div>
-                        <div className="db-claims-meta">
-                          {new Date(claim.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+
+              <div className="db-list-body">
+                {recentClaims.length === 0 ? (
+                  <div className="db-policy-empty">
+                    <div className="db-section-kicker">Quiet cycle</div>
+                    <h3>No claims yet.</h3>
+                    <p>When a disruption crosses the threshold, the claim feed will appear here automatically.</p>
+                  </div>
+                ) : (
+                  recentClaims.map((claim, index) => {
+                    const status = claim.status || 'processing';
+                    const tone = status === 'paid' ? 'success' : status === 'rejected' ? 'danger' : 'warning';
+                    return (
+                      <div className="db-claim-row" key={claim._id || index}>
+                        <div>
+                          <div className="db-claim-type">{(claim.triggerType || 'disruption').replace(/_/g, ' ')}</div>
+                          <div className="db-claim-meta">
+                            {new Date(claim.createdAt || Date.now()).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </div>
+                        </div>
+                        <div className="db-claim-right">
+                          <div className="db-claim-amount">{status === 'paid' ? `+₹${claim.payoutAmount || 0}` : 'Under review'}</div>
+                          <span className={`db-tone-pill ${tone}`}>{status}</span>
                         </div>
                       </div>
-                      <div className="db-claims-right">
-                        <div className="db-claims-amt" style={{ color: statusColor }}>
-                          {isPaid ? `+₹${claim.payoutAmount || 0}` : 'Pending'}
-                        </div>
-                        <div
-                          className="db-claims-status"
-                          style={{ color: statusColor, borderColor: `${statusColor}66`, background: `${statusColor}12` }}
-                        >
-                          {claim.status || 'processing'}
-                        </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="db-stack">
+              <div className="db-brief">
+                <div className="db-section-kicker">Shift brief</div>
+                <div className="db-panel-title">Today’s signals</div>
+                <div className="db-brief-grid" style={{ marginTop: 14 }}>
+                  {SCENARIO_BRIEFS.map((brief) => (
+                    <div className="db-brief-item" key={brief.label}>
+                      <div>
+                        <div className="db-brief-label">{brief.label}</div>
+                        <div className="db-brief-copy">{brief.value}</div>
                       </div>
+                      <span className={`db-tone-pill ${brief.tone}`}>{brief.tone}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Coverage Snapshot */}
-          <div className="db-claim-card db-animate-4">
-            <div className="db-claim-header">Coverage snapshot</div>
-            <div className="db-claim-row">
-              <div>
-                <div className="db-claim-type">Claims in processing</div>
-                <div className="db-claim-date">Auto-review based on live disruption data</div>
-              </div>
-              <div className="db-claim-amount" style={{ color: pending.length ? '#FFB347' : '#00E5A0' }}>
-                {pending.length}
+              <div className="db-checklist">
+                <div className="db-section-kicker">Readiness</div>
+                <div className="db-panel-title">Pre-shift checklist</div>
+                {readinessItems.map((item) => (
+                  <div className="db-check-item" key={item.title}>
+                    <div className="db-check-mark">+</div>
+                    <div>
+                      <div className="db-check-title">{item.title}</div>
+                      <div className="db-check-copy">{item.copy}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Simulate Disruption */}
-          <button className="db-sim-btn" onClick={handleSimulate} disabled={simming}>
-            <span>🌧</span>
-            {simming ? 'Simulating…' : 'Simulate extreme weather'}
-          </button>
-
-          {/* Footer */}
-          <div style={{ textAlign: 'center', paddingTop: 4 }}>
-            <div style={{ fontSize: 10, color: '#1A2E40', letterSpacing: '0.5px' }}>
-              GIGSHIELD AI · GUIDEWIRE DEVTRAILS 2026
-            </div>
-          </div>
-
+          </section>
         </div>
 
         {notice && (
           <div className="db-modal-backdrop" onClick={() => setNotice(null)}>
-            <div className="db-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="db-modal-head">
-                <div className="db-modal-title">{notice.title}</div>
-                <div className="db-modal-badge">{notice.type === 'error' ? 'Error' : 'Alert'}</div>
-              </div>
-              <div className="db-modal-body">
-                <div className="db-modal-text">{notice.message}</div>
-                {notice.type === 'disruption' && (
-                  <div className="db-modal-grid">
-                    <div className="db-modal-metric">
-                      <div className="db-modal-metric-k">Workability</div>
-                      <div className="db-modal-metric-v">{notice.score}/100</div>
-                    </div>
-                    <div className="db-modal-metric">
-                      <div className="db-modal-metric-k">Payout</div>
-                      <div className="db-modal-metric-v">{notice.payout}%</div>
-                    </div>
+            <div className="db-modal" onClick={(event) => event.stopPropagation()}>
+              <span className={`db-tone-pill ${notice.type === 'error' ? 'danger' : 'warning'}`}>
+                {notice.type === 'error' ? 'Issue' : 'Simulation'}
+              </span>
+              <h3>{notice.title}</h3>
+              <p>{notice.message}</p>
+
+              {notice.type === 'disruption' && (
+                <div className="db-modal-grid">
+                  <div className="db-modal-card">
+                    <span>Workability</span>
+                    <strong>{notice.score}/100</strong>
                   </div>
-                )}
-                <div className="db-modal-actions">
-                  <button className="db-modal-btn" onClick={() => setNotice(null)}>
-                    OK
-                  </button>
+                  <div className="db-modal-card">
+                    <span>Projected payout</span>
+                    <strong>{notice.payout}%</strong>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              <button className="db-btn" onClick={() => setNotice(null)}>Close</button>
             </div>
           </div>
         )}

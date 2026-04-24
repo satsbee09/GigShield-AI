@@ -1,333 +1,270 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getClaims } from '../services/api';
 
-const STATUS_COLOR = { paid: '#00E5A0', processing: '#FFB347', rejected: '#FF5C5C', pending: '#FFB347' };
-const STATUS_BG    = { paid: 'rgba(0,229,160,0.08)', processing: 'rgba(255,179,71,0.08)', rejected: 'rgba(255,92,92,0.08)', pending: 'rgba(255,179,71,0.08)' };
-
-const TRIGGER_ICON = {
-  heavy_rain:  '🌧',
-  aqi:         '🌫',
-  heatwave:    '🌡',
-  curfew:      '🚫',
-  flood:       '🌊',
-  traffic:     '🚦',
-};
-const icon = t => TRIGGER_ICON[t] || '⚡';
 const FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'processing', label: 'Processing' },
+  { id: 'all', label: 'All claims' },
+  { id: 'processing', label: 'In review' },
   { id: 'paid', label: 'Paid' },
   { id: 'rejected', label: 'Rejected' },
 ];
 
+function getStatusTone(status) {
+  if (status === 'paid') return 'success';
+  if (status === 'rejected') return 'danger';
+  return 'warning';
+}
+
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
   .cl-screen {
-    background:
-      radial-gradient(circle at top left, rgba(79,140,255,0.14), transparent 28%),
-      radial-gradient(circle at 80% 15%, rgba(25,215,165,0.12), transparent 24%),
-      linear-gradient(180deg, #050b14 0%, #07111f 52%, #081423 100%);
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-    padding: 48px 16px 32px;
-    position: relative;
+    min-height: 100%;
+    padding: 24px;
   }
 
-  .cl-bg-orb {
-    position: fixed;
-    width: 260px; height: 260px;
-    background: radial-gradient(circle, rgba(79,140,255,0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    top: -40px; left: -60px;
-    pointer-events: none;
+  .cl-stack {
+    display: grid;
+    gap: 16px;
   }
 
-  .cl-inner {
-    position: relative; z-index: 1;
-    max-width: 420px; margin: 0 auto;
+  .cl-hero,
+  .cl-panel,
+  .cl-list {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
   }
 
-  .cl-heading {
-    color: #fff;
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: -0.7px;
-    margin-bottom: 6px;
-  }
-  .cl-subheading {
-    color: #8ea3bc;
-    font-size: 13px;
-    margin-bottom: 24px;
+  .cl-hero {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+    gap: 16px;
   }
 
-  /* ── Summary Strip ── */
+  .cl-kicker,
+  .cl-card-kicker {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.68rem;
+  }
+
+  .cl-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 3rem);
+    letter-spacing: -0.06em;
+    line-height: 0.98;
+    margin: 10px 0 12px;
+  }
+
+  .cl-lead {
+    color: var(--text-muted);
+    line-height: 1.55;
+    max-width: 56ch;
+  }
+
   .cl-summary {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-  .cl-summary-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 12px 10px;
-    text-align: center;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-  .cl-summary-val {
-    font-family: 'DM Mono', monospace;
-    font-size: 20px;
-    font-weight: 500;
-    color: #fff;
-    letter-spacing: -0.5px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .cl-summary-val.green { color: #66f0c9; }
-  .cl-summary-label {
-    color: #8ea3bc;
-    font-size: 9px;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
   }
 
-  /* ── Section title ── */
-  .cl-section-title {
-    color: #8ea3bc;
-    font-size: 10px;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
+  .cl-summary-card {
+    border-radius: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+
+  .cl-summary-value {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    letter-spacing: -0.05em;
+    margin: 8px 0 4px;
+  }
+
+  .cl-summary-copy {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .cl-panel,
+  .cl-list {
+    padding: 18px;
+  }
+
+  .cl-panel-head,
+  .cl-list-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .cl-panel-title,
+  .cl-list-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    margin-top: 6px;
   }
 
   .cl-controls {
-    margin-bottom: 14px;
+    display: grid;
+    gap: 12px;
   }
 
-  .cl-toolbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-  }
-
-  .cl-export-btn {
-    border: 1px solid rgba(79,140,255,0.34);
-    background: rgba(79,140,255,0.1);
-    color: #9ec5ff;
-    border-radius: 999px;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    padding: 7px 12px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-  }
-
-  .cl-export-btn:hover:not(:disabled) {
-    border-color: rgba(79,140,255,0.5);
-    background: rgba(79,140,255,0.16);
-    color: #d6e8ff;
-  }
-
-  .cl-export-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
   .cl-search {
     width: 100%;
-    padding: 11px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    color: #fff;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 12px 14px;
     outline: none;
-    margin-bottom: 8px;
   }
-  .cl-search::placeholder { color: #2E455B; }
+
   .cl-search:focus {
-    border-color: rgba(25,215,165,0.34);
-    background: rgba(25,215,165,0.04);
-    box-shadow: 0 0 0 4px rgba(25,215,165,0.08);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
   }
+
   .cl-filter-row {
     display: flex;
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-  .cl-filter-row::-webkit-scrollbar { display: none; }
-  .cl-filter-chip {
-    border: 1px solid rgba(255,255,255,0.09);
-    background: rgba(255,255,255,0.04);
-    border-radius: 999px;
-    color: #90a4ba;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    padding: 6px 10px;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-  }
-  .cl-filter-chip.active {
-    border-color: rgba(25,215,165,0.34);
-    background: rgba(25,215,165,0.08);
-    color: #66f0c9;
-  }
-  .cl-filter-meta {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 7px;
-  }
-  .cl-active-badge {
-    border-radius: 999px;
-    border: 1px solid rgba(25,215,165,0.32);
-    background: rgba(25,215,165,0.08);
-    color: #66f0c9;
-    font-size: 10px;
-    letter-spacing: 0.4px;
-    padding: 3px 8px;
-    text-transform: uppercase;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-  }
-  .cl-results-note {
-    color: #8ea3bc;
-    font-size: 11px;
-    margin-bottom: 10px;
+    flex-wrap: wrap;
   }
 
-  /* ── Claim Card ── */
+  .cl-chip,
+  .cl-export-btn {
+    border-radius: 999px;
+    padding: 9px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--line);
+  }
+
+  .cl-chip {
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+  }
+
+  .cl-chip.active {
+    background: var(--bg-ink);
+    color: var(--text-inverse);
+    border-color: transparent;
+  }
+
+  .cl-export-btn {
+    background: transparent;
+    color: var(--accent);
+  }
+
+  .cl-results {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .cl-claim-list {
+    display: grid;
+    gap: 12px;
+  }
+
   .cl-claim-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
     padding: 16px;
-    margin-bottom: 10px;
-    transition: border-color 0.2s;
-    animation: fadeUp 0.3s ease forwards;
-    opacity: 0;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-  .cl-claim-card:hover { border-color: rgba(255,255,255,0.1); }
-
-  .cl-claim-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-  }
-  .cl-claim-left { display: flex; align-items: center; gap: 12px; }
-  .cl-claim-icon-wrap {
-    width: 40px; height: 40px;
-    border-radius: 11px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-  .cl-claim-type {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    text-transform: capitalize;
-    margin-bottom: 2px;
-    letter-spacing: -0.2px;
-  }
-  .cl-claim-date { color: #8ea3bc; font-size: 11px; }
-
-  .cl-claim-amount {
-    font-family: 'DM Mono', monospace;
-    font-size: 18px;
-    font-weight: 500;
-    letter-spacing: -0.5px;
+    display: grid;
+    gap: 12px;
   }
 
-  .cl-claim-divider {
-    height: 1px;
-    background: rgba(255,255,255,0.06);
-    margin: 10px 0;
-  }
-
+  .cl-claim-top,
   .cl-claim-bottom {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
   }
-  .cl-status-pill {
-    display: flex; align-items: center; gap: 5px;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+
+  .cl-claim-type {
+    font-weight: 700;
+    text-transform: capitalize;
+    margin-bottom: 4px;
+  }
+
+  .cl-claim-meta,
+  .cl-claim-note {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .cl-claim-amount {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+  }
+
+  .cl-pill {
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 0.72rem;
+    font-weight: 700;
     text-transform: uppercase;
-    border: 1px solid;
-  }
-  .cl-status-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-  .cl-payout-label { color: #8ea3bc; font-size: 11px; }
-
-  /* ── Empty State ── */
-  .cl-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    text-align: center;
-  }
-  .cl-empty-icon {
-    font-size: 40px;
-    margin-bottom: 14px;
-    opacity: 0.4;
-  }
-  .cl-empty-title {
-    color: #fff;
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-  .cl-empty-sub {
-    color: #8ea3bc;
-    font-size: 13px;
-    line-height: 1.5;
-    max-width: 220px;
+    letter-spacing: 0.08em;
+    border: 1px solid var(--line);
   }
 
-  /* ── Loading ── */
+  .cl-pill.success {
+    background: var(--success-soft);
+    color: var(--success);
+  }
+
+  .cl-pill.warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+  }
+
+  .cl-pill.danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .cl-empty,
   .cl-loading {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(180deg, #050b14 0%, #07111f 100%);
-    font-family: 'DM Sans', sans-serif;
-    color: #8ea3bc;
-    font-size: 13px;
-    letter-spacing: 0.4px;
+    min-height: 220px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--text-muted);
   }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
+  @media (max-width: 900px) {
+    .cl-hero {
+      grid-template-columns: 1fr;
+    }
   }
-  .cl-animate   { animation: fadeUp 0.3s ease forwards; }
-  .cl-animate-2 { animation: fadeUp 0.3s 0.06s ease both; }
+
+  @media (max-width: 640px) {
+    .cl-screen {
+      padding: 16px;
+    }
+
+    .cl-summary {
+      grid-template-columns: 1fr;
+    }
+
+    .cl-claim-top,
+    .cl-claim-bottom,
+    .cl-panel-head,
+    .cl-list-head {
+      flex-direction: column;
+    }
+  }
 `;
 
 export default function Claims({ worker }) {
-  const [claims,  setClaims]  = useState([]);
+  const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
@@ -335,282 +272,189 @@ export default function Claims({ worker }) {
   useEffect(() => {
     if (!worker?._id) return;
     getClaims(worker._id)
-      .then(res => { setClaims(res.claims || []); setLoading(false); })
+      .then((res) => {
+        setClaims(res.claims || []);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
-  }, [worker._id]);
+  }, [worker?._id]);
 
-  if (loading) {
-    return (
-      <>
-        <style>{css}</style>
-        <div className="cl-loading">Loading claims…</div>
-      </>
-    );
-  }
+  const paidClaims = claims.filter((claim) => claim.status === 'paid');
+  const rejectedClaims = claims.filter((claim) => claim.status === 'rejected');
+  const pendingClaims = claims.filter((claim) => claim.status !== 'paid' && claim.status !== 'rejected');
+  const totalPaid = paidClaims.reduce((sum, claim) => sum + (claim.payoutAmount || 0), 0);
 
-  const paid      = claims.filter(c => c.status === 'paid');
-  const total     = paid.reduce((s, c) => s + (c.payoutAmount || 0), 0);
-  const pending   = claims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
-  const rejected  = claims.filter(c => c.status === 'rejected');
-
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const filteredClaims = claims.filter((claim) => {
-    const status = claim.status || 'pending';
-    const matchesFilter =
-      activeFilter === 'all'
-        ? true
-        : activeFilter === 'processing'
-          ? status !== 'paid' && status !== 'rejected'
-          : status === activeFilter;
-
-    const trigger = (claim.triggerType || 'disruption').replace(/_/g, ' ').toLowerCase();
-    const matchesSearch = normalizedSearch
-      ? trigger.includes(normalizedSearch)
-      : true;
-
-    return matchesFilter && matchesSearch;
-  });
-
-  const filteredPending = filteredClaims.filter(c => c.status !== 'paid' && c.status !== 'rejected');
-  const filteredPaid = filteredClaims.filter(c => c.status === 'paid');
-  const filteredRejected = filteredClaims.filter(c => c.status === 'rejected');
-  const hasActiveControls = searchTerm.trim().length > 0 || activeFilter !== 'all';
-  const activeFiltersCount = (searchTerm.trim().length > 0 ? 1 : 0) + (activeFilter !== 'all' ? 1 : 0);
+  const filteredClaims = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return claims.filter((claim) => {
+      const status = claim.status || 'processing';
+      const trigger = (claim.triggerType || 'disruption').replace(/_/g, ' ').toLowerCase();
+      const matchesSearch = normalizedSearch ? trigger.includes(normalizedSearch) : true;
+      const matchesFilter =
+        activeFilter === 'all'
+          ? true
+          : activeFilter === 'processing'
+            ? status !== 'paid' && status !== 'rejected'
+            : status === activeFilter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [activeFilter, claims, searchTerm]);
 
   function handleExportCsv() {
     if (filteredClaims.length === 0) return;
-
-    const rows = filteredClaims.map((claim) => ({
-      id: claim._id || '',
-      trigger: (claim.triggerType || 'disruption').replace(/_/g, ' '),
-      status: claim.status || 'processing',
-      payoutAmount: claim.payoutAmount || 0,
-      payoutPercent: claim.payoutPercent ?? '',
-      createdAt: claim.createdAt || '',
-    }));
-
     const headers = ['id', 'trigger', 'status', 'payoutAmount', 'payoutPercent', 'createdAt'];
-    const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const csvLines = [headers.join(',')];
-
-    rows.forEach((row) => {
-      csvLines.push(headers.map((header) => escapeCsv(row[header])).join(','));
+    const lines = [headers.join(',')];
+    filteredClaims.forEach((claim) => {
+      const row = [
+        claim._id || '',
+        (claim.triggerType || 'disruption').replace(/_/g, ' '),
+        claim.status || 'processing',
+        claim.payoutAmount || 0,
+        claim.payoutPercent ?? '',
+        claim.createdAt || '',
+      ];
+      lines.push(row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','));
     });
-
-    const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const dateTag = new Date().toISOString().slice(0, 10);
     link.href = url;
-    link.download = `gigshield-claims-${dateTag}.csv`;
+    link.download = `gigshield-claims-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
 
+  if (loading) {
+    return (
+      <>
+        <style>{css}</style>
+        <div className="cl-loading">Loading claims log…</div>
+      </>
+    );
+  }
+
   return (
     <>
       <style>{css}</style>
       <div className="cl-screen">
-        <div className="cl-bg-orb" />
-        <div className="cl-inner">
-
-          {/* Heading */}
-          <div className="cl-animate">
-            <h1 className="cl-heading">Claims</h1>
-            <p className="cl-subheading">Auto-triggered · Zero filing required</p>
-          </div>
-
-          {/* Summary strip — always show */}
-          <div className="cl-summary cl-animate-2">
-            <div className="cl-summary-card">
-              <div className="cl-summary-val">{claims.length}</div>
-              <div className="cl-summary-label">Total</div>
+        <div className="cl-stack">
+          <section className="cl-hero">
+            <div>
+              <div className="cl-kicker">Claims desk</div>
+              <h1 className="cl-title">A cleaner payout timeline.</h1>
+              <p className="cl-lead">
+                Every triggered disruption lands here with a readable status trail, export option, and quick filtering so the page feels operational instead of ornamental.
+              </p>
             </div>
-            <div className="cl-summary-card">
-              <div className="cl-summary-val green">{paid.length}</div>
-              <div className="cl-summary-label">Paid</div>
-            </div>
-            <div className="cl-summary-card">
-              <div className="cl-summary-val green">
-                ₹{total.toLocaleString('en-IN')}
+            <div className="cl-summary">
+              <div className="cl-summary-card">
+                <div className="cl-card-kicker">Total claims</div>
+                <div className="cl-summary-value">{claims.length}</div>
+                <div className="cl-summary-copy">Auto-generated records.</div>
               </div>
-              <div className="cl-summary-label">Received</div>
+              <div className="cl-summary-card">
+                <div className="cl-card-kicker">Paid out</div>
+                <div className="cl-summary-value">₹{totalPaid.toLocaleString('en-IN')}</div>
+                <div className="cl-summary-copy">Total credited so far.</div>
+              </div>
+              <div className="cl-summary-card">
+                <div className="cl-card-kicker">In review</div>
+                <div className="cl-summary-value">{pendingClaims.length}</div>
+                <div className="cl-summary-copy">Awaiting final verification.</div>
+              </div>
             </div>
-          </div>
+          </section>
 
-          {/* Controls */}
-          <div className="cl-controls cl-animate-2">
-            <div className="cl-toolbar">
-              <button
-                className="cl-export-btn"
-                onClick={handleExportCsv}
-                disabled={filteredClaims.length === 0}
-              >
-                Export filtered CSV
+          <section className="cl-panel">
+            <div className="cl-panel-head">
+              <div>
+                <div className="cl-kicker">Controls</div>
+                <div className="cl-panel-title">Filter and export</div>
+              </div>
+              <button className="cl-export-btn" onClick={handleExportCsv} disabled={filteredClaims.length === 0}>
+                Export CSV
               </button>
             </div>
-            <input
-              className="cl-search"
-              placeholder="Search by disruption type"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="cl-filter-row">
-              {FILTERS.map((filter) => (
-                <button
-                  key={filter.id}
-                  className={`cl-filter-chip ${activeFilter === filter.id ? 'active' : ''}`}
-                  onClick={() => setActiveFilter(filter.id)}
-                >
-                  {filter.label}
-                </button>
-              ))}
+
+            <div className="cl-controls">
+              <input
+                className="cl-search"
+                placeholder="Search by trigger type"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+              <div className="cl-filter-row">
+                {FILTERS.map((filter) => (
+                  <button
+                    key={filter.id}
+                    className={`cl-chip ${activeFilter === filter.id ? 'active' : ''}`}
+                    onClick={() => setActiveFilter(filter.id)}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              <div className="cl-results">
+                Showing {filteredClaims.length} of {claims.length} claims. {paidClaims.length} paid, {pendingClaims.length} in review, {rejectedClaims.length} rejected.
+              </div>
             </div>
-            {hasActiveControls && (
-              <div className="cl-filter-meta">
-                <button
-                  className="cl-active-badge"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setActiveFilter('all');
-                  }}
-                >
-                  {activeFiltersCount} active
-                </button>
+          </section>
+
+          <section className="cl-list">
+            <div className="cl-list-head">
+              <div>
+                <div className="cl-kicker">Timeline</div>
+                <div className="cl-list-title">Claim activity</div>
+              </div>
+            </div>
+
+            {claims.length === 0 ? (
+              <div className="cl-empty">No claims yet. When a disruption crosses the payout threshold, it will appear here automatically.</div>
+            ) : filteredClaims.length === 0 ? (
+              <div className="cl-empty">No claims match the current filters.</div>
+            ) : (
+              <div className="cl-claim-list">
+                {filteredClaims.map((claim, index) => {
+                  const status = claim.status || 'processing';
+                  const tone = getStatusTone(status);
+                  const triggerLabel = (claim.triggerType || 'disruption').replace(/_/g, ' ');
+
+                  return (
+                    <article className="cl-claim-card" key={claim._id || index}>
+                      <div className="cl-claim-top">
+                        <div>
+                          <div className="cl-claim-type">{triggerLabel}</div>
+                          <div className="cl-claim-meta">
+                            {new Date(claim.createdAt || Date.now()).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </div>
+                        </div>
+                        <span className={`cl-pill ${tone}`}>{status}</span>
+                      </div>
+
+                      <div className="cl-claim-bottom">
+                        <div className="cl-claim-note">
+                          {status === 'paid' && 'This payout has been approved and credited.'}
+                          {status === 'rejected' && 'This disruption did not meet the payout conditions.'}
+                          {status !== 'paid' && status !== 'rejected' && 'Verification is still running against live disruption data.'}
+                        </div>
+                        <div className="cl-claim-amount">
+                          {status === 'paid' ? `+₹${claim.payoutAmount || 0}` : claim.payoutPercent ? `${claim.payoutPercent}%` : 'Pending'}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
-          </div>
-
-          {/* Empty state */}
-          {claims.length === 0 ? (
-            <div className="cl-empty cl-animate">
-              <div className="cl-empty-icon">🛡️</div>
-              <div className="cl-empty-title">No claims yet</div>
-              <div className="cl-empty-sub">
-                When a disruption is detected, your claim will appear here automatically.
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="cl-results-note">
-                Showing {filteredClaims.length} of {claims.length} claims · {pending.length} processing · {paid.length} paid · {rejected.length} rejected
-              </div>
-
-              {filteredClaims.length === 0 ? (
-                <div className="cl-empty cl-animate">
-                  <div className="cl-empty-icon">🔎</div>
-                  <div className="cl-empty-title">No matching claims</div>
-                  <div className="cl-empty-sub">
-                    Try changing filters or search for a different disruption type.
-                  </div>
-                </div>
-              ) : (
-                <>
-              {/* Pending */}
-              {filteredPending.length > 0 && (
-                <>
-                  <div className="cl-section-title">Processing</div>
-                  {filteredPending.map((c, i) => (
-                    <ClaimCard key={i} claim={c} delay={i * 60} />
-                  ))}
-                </>
-              )}
-
-              {/* Paid */}
-              {filteredPaid.length > 0 && (
-                <>
-                  <div className="cl-section-title" style={{ marginTop: filteredPending.length ? 16 : 0 }}>
-                    Paid out
-                  </div>
-                  {filteredPaid.map((c, i) => (
-                    <ClaimCard key={i} claim={c} delay={i * 60} />
-                  ))}
-                </>
-              )}
-
-              {/* Rejected */}
-              {filteredRejected.length > 0 && (
-                <>
-                  <div className="cl-section-title" style={{ marginTop: filteredPending.length || filteredPaid.length ? 16 : 0 }}>
-                    Rejected
-                  </div>
-                  {filteredRejected.map((c, i) => (
-                    <ClaimCard key={i} claim={c} delay={i * 60} />
-                  ))}
-                </>
-              )}
-                </>
-              )}
-            </>
-          )}
-
+          </section>
         </div>
       </div>
     </>
-  );
-}
-
-function ClaimCard({ claim, delay = 0 }) {
-  const status  = claim.status || 'pending';
-  const color   = STATUS_COLOR[status] || '#7A95AA';
-  const bg      = STATUS_BG[status]    || 'rgba(255,255,255,0.04)';
-  const trigger = claim.triggerType || 'disruption';
-  const amount  = claim.payoutAmount || 0;
-
-  return (
-    <div
-      className="cl-claim-card"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className="cl-claim-top">
-        <div className="cl-claim-left">
-          <div
-            className="cl-claim-icon-wrap"
-            style={{ background: bg }}
-          >
-            {icon(trigger)}
-          </div>
-          <div>
-            <div className="cl-claim-type">
-              {trigger.replace(/_/g, ' ')}
-            </div>
-            <div className="cl-claim-date">
-              {claim.createdAt
-                ? new Date(claim.createdAt).toLocaleDateString('en-IN', {
-                    day: 'numeric', month: 'short', year: 'numeric'
-                  })
-                : 'Recent'}
-            </div>
-          </div>
-        </div>
-
-        <div className="cl-claim-amount" style={{ color: status === 'paid' ? color : '#3A5570' }}>
-          {status === 'paid' ? `+₹${amount.toLocaleString('en-IN')}` : '—'}
-        </div>
-      </div>
-
-      <div className="cl-claim-divider" />
-
-      <div className="cl-claim-bottom">
-        <div
-          className="cl-status-pill"
-          style={{
-            color,
-            borderColor: color + '33',
-            background: bg,
-          }}
-        >
-          <span className="cl-status-dot" />
-          {status}
-        </div>
-        <div className="cl-payout-label">
-          {status === 'paid'
-            ? `${claim.payoutPercent ?? '—'}% of coverage`
-            : 'Verifying disruption data'}
-        </div>
-      </div>
-    </div>
   );
 }

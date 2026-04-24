@@ -1,32 +1,59 @@
 :root {
-  color-scheme: dark;
-  --bg-0: #050b14;
-  --bg-1: #07111f;
-  --bg-2: #0c1729;
-  --panel: rgba(12, 22, 38, 0.72);
-  --panel-strong: rgba(9, 18, 32, 0.88);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --text: #f3f7ff;
-  --muted: #8ea3bc;
-  --muted-2: #5f738c;
-  --accent: #19d7a5;
-  --accent-2: #4f8cff;
-  --accent-warm: #ffbb55;
-  --danger: #ff6b6b;
+  color-scheme: light;
+  --font-body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --bg-app: #f4efe6;
+  --bg-elevated: #fbf8f1;
+  --bg-card: rgba(255, 252, 246, 0.88);
+  --bg-card-strong: rgba(255, 252, 246, 0.96);
+  --bg-tint: rgba(31, 36, 45, 0.03);
+  --bg-ink: #11161d;
+  --bg-accent: #da5d36;
+
+  --text: #171c23;
+  --text-muted: #5d6673;
+  --text-faint: #7d8795;
+  --text-inverse: #f8f4ed;
+
+  --line: rgba(23, 28, 35, 0.1);
+  --line-strong: rgba(23, 28, 35, 0.18);
+  --shadow: 0 18px 44px rgba(47, 39, 28, 0.11);
+
+  --accent: #da5d36;
+  --accent-2: #2359d1;
+  --accent-soft: rgba(218, 93, 54, 0.12);
+  --success: #1d8f5f;
+  --success-soft: rgba(29, 143, 95, 0.12);
+  --warning: #b77717;
+  --warning-soft: rgba(183, 119, 23, 0.14);
+  --danger: #ba3f45;
+  --danger-soft: rgba(186, 63, 69, 0.12);
 }
 
 body.theme-dark {
   color-scheme: dark;
-}
+  --bg-app: #10141b;
+  --bg-elevated: #161b23;
+  --bg-card: rgba(25, 30, 39, 0.88);
+  --bg-card-strong: rgba(19, 23, 31, 0.96);
+  --bg-tint: rgba(255, 255, 255, 0.03);
+  --bg-ink: #080b10;
 
-body.theme-light {
-  color-scheme: light;
-  color: #102033;
-  background:
-    radial-gradient(circle at 12% 12%, rgba(79, 140, 255, 0.22), transparent 36%),
-    radial-gradient(circle at 84% 8%, rgba(25, 215, 165, 0.2), transparent 30%),
-    linear-gradient(180deg, #f3f7fc 0%, #edf2f8 48%, #e8eef5 100%);
+  --text: #eef2f7;
+  --text-muted: #a7b2c0;
+  --text-faint: #788495;
+  --text-inverse: #151920;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+
+  --accent-soft: rgba(236, 122, 86, 0.16);
+  --success-soft: rgba(29, 143, 95, 0.18);
+  --warning-soft: rgba(183, 119, 23, 0.18);
+  --danger-soft: rgba(186, 63, 69, 0.18);
 }
 
 html,
@@ -36,24 +63,23 @@ body,
 }
 
 html {
-  background: var(--bg-1);
+  background: var(--bg-app);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   color: var(--text);
-  font-family: 'DM Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   background:
-    radial-gradient(circle at 15% 15%, rgba(79, 140, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 80% 10%, rgba(25, 215, 165, 0.16), transparent 28%),
-    radial-gradient(circle at 50% 85%, rgba(255, 187, 85, 0.08), transparent 30%),
-    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 44%, var(--bg-2) 100%);
+    radial-gradient(circle at top left, rgba(218, 93, 54, 0.09), transparent 22%),
+    radial-gradient(circle at top right, rgba(35, 89, 209, 0.08), transparent 20%),
+    linear-gradient(180deg, var(--bg-app) 0%, color-mix(in srgb, var(--bg-app) 92%, #000 8%) 100%);
   background-attachment: fixed;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background 0.28s ease, color 0.24s ease;
+  transition: background-color 0.28s ease, color 0.22s ease;
 }
 
 * {
@@ -65,9 +91,9 @@ body.theme-transition *,
 body.theme-transition *::before,
 body.theme-transition *::after {
   transition:
-    background 0.26s ease,
-    background-color 0.26s ease,
-    color 0.22s ease,
+    background 0.24s ease,
+    background-color 0.24s ease,
+    color 0.2s ease,
     border-color 0.22s ease,
     box-shadow 0.24s ease !important;
 }
@@ -83,9 +109,13 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+a {
+  color: inherit;
+}
+
 ::selection {
-  background: rgba(25, 215, 165, 0.28);
-  color: #fff;
+  background: rgba(218, 93, 54, 0.18);
+  color: var(--text);
 }
 
 ::-webkit-scrollbar {
@@ -94,281 +124,17 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(96, 82, 63, 0.28);
   border-radius: 999px;
-  border: 2px solid rgba(5, 11, 20, 0.9);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-body.theme-light ::selection {
-  background: rgba(79, 140, 255, 0.28);
-  color: #0d1b2c;
-}
-
-body.theme-light ::-webkit-scrollbar-track {
-  background: rgba(17, 32, 50, 0.05);
-}
-
-body.theme-light ::-webkit-scrollbar-thumb {
-  background: rgba(17, 32, 50, 0.2);
-  border: 2px solid rgba(243, 247, 252, 0.95);
-}
-
-body.theme-light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(17, 32, 50, 0.3);
-}
-
-body.theme-light .app-shell,
-body.theme-light .gs-screen,
-body.theme-light .db-screen,
-body.theme-light .cl-screen,
-body.theme-light .pl-screen,
-body.theme-light .pf-screen {
-  background:
-    radial-gradient(circle at 12% 10%, rgba(79, 140, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 88% 8%, rgba(25, 215, 165, 0.16), transparent 30%),
-    linear-gradient(180deg, #f6f9fd 0%, #edf3f9 52%, #e7eef6 100%) !important;
-}
-
-body.theme-light .app-shell::before,
-body.theme-light .gs-bg-grid,
-body.theme-light .pl-bg-grid {
-  opacity: 0.35 !important;
-  background-image:
-    linear-gradient(rgba(17,32,50,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17,32,50,0.05) 1px, transparent 1px) !important;
-}
-
-body.theme-light .app-topbar,
-body.theme-light .app-nav,
-body.theme-light .app-notif-panel,
-body.theme-light .db-policy-active,
-body.theme-light .db-no-policy,
-body.theme-light .db-w-card,
-body.theme-light .db-stat-card,
-body.theme-light .db-reco-card,
-body.theme-light .db-claim-card,
-body.theme-light .db-claims-list,
-body.theme-light .cl-summary-card,
-body.theme-light .cl-claim-card,
-body.theme-light .pl-price-card,
-body.theme-light .pl-info-list,
-body.theme-light .pl-covered-list,
-body.theme-light .pl-forecast,
-body.theme-light .pf-card,
-body.theme-light .pf-stat,
-body.theme-light .gs-plan-card,
-body.theme-light .gs-info-list {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border-color: rgba(17, 32, 50, 0.14) !important;
-  box-shadow: 0 10px 28px rgba(31, 53, 79, 0.08) !important;
-}
-
-body.theme-light .app-topbar-brand,
-body.theme-light .app-notif-head,
-body.theme-light .db-name,
-body.theme-light .cl-heading,
-body.theme-light .pl-heading,
-body.theme-light .pf-name,
-body.theme-light .gs-heading,
-body.theme-light .app-theme-btn,
-body.theme-light .app-top-btn,
-body.theme-light .app-top-icon-btn,
-body.theme-light .db-claim-type,
-body.theme-light .cl-claim-type,
-body.theme-light .pl-info-val,
-body.theme-light .pf-val,
-body.theme-light .db-stat-value,
-body.theme-light .cl-summary-val,
-body.theme-light .gs-info-val {
-  color: #102033 !important;
-}
-
-body.theme-light .app-topbar-sub,
-body.theme-light .db-greeting,
-body.theme-light .db-section-title,
-body.theme-light .db-policy-row-key,
-body.theme-light .db-policy-zone,
-body.theme-light .db-policy-expiry,
-body.theme-light .db-live-pill,
-body.theme-light .db-w-status,
-body.theme-light .db-no-policy-title,
-body.theme-light .db-claim-date,
-body.theme-light .db-no-policy-sub,
-body.theme-light .cl-subheading,
-body.theme-light .cl-section-title,
-body.theme-light .cl-active-badge,
-body.theme-light .cl-status-pill,
-body.theme-light .cl-payout-label,
-body.theme-light .pl-subheading,
-body.theme-light .pl-tier-label,
-body.theme-light .pl-price-note,
-body.theme-light .pl-modal-title,
-body.theme-light .pl-modal-text,
-body.theme-light .pl-forecast-title,
-body.theme-light .pl-forecast-k,
-body.theme-light .pl-info-key,
-body.theme-light .pf-sub,
-body.theme-light .pf-key,
-body.theme-light .pf-title,
-body.theme-light .pf-help-title,
-body.theme-light .pf-help-text,
-body.theme-light .pf-help-item,
-body.theme-light .gs-subheading,
-body.theme-light .gs-label,
-body.theme-light .gs-subheading b,
-body.theme-light .gs-plan-subtitle,
-body.theme-light .gs-demo-otp-text,
-body.theme-light .gs-info-key,
-body.theme-light .app-notif-item.read,
-body.theme-light .db-reco-head,
-body.theme-light .db-reco-item,
-body.theme-light .cl-results-note,
-body.theme-light .pl-covered-text,
-body.theme-light .pf-stat-key,
-body.theme-light .gs-trust-label {
-  color: #4f6378 !important;
-}
-
-body.theme-light .db-policy-row-key,
-body.theme-light .db-policy-zone,
-body.theme-light .db-policy-expiry,
-body.theme-light .db-live-pill,
-body.theme-light .db-w-status,
-body.theme-light .db-no-policy-title,
-body.theme-light .db-no-policy-sub,
-body.theme-light .cl-active-badge,
-body.theme-light .cl-status-pill,
-body.theme-light .cl-payout-label,
-body.theme-light .pl-tier-label,
-body.theme-light .pl-price-note,
-body.theme-light .pl-modal-title,
-body.theme-light .pl-modal-text,
-body.theme-light .pl-forecast-title,
-body.theme-light .pl-forecast-k,
-body.theme-light .pf-help-title,
-body.theme-light .pf-help-text,
-body.theme-light .pf-help-item,
-body.theme-light .gs-plan-subtitle,
-body.theme-light .gs-demo-otp-text {
-  color: #30465d !important;
-}
-
-body.theme-light .app-top-btn,
-body.theme-light .app-theme-btn,
-body.theme-light .app-top-icon-btn,
-body.theme-light .app-nav-btn,
-body.theme-light .gs-input,
-body.theme-light .gs-select,
-body.theme-light .gs-prefix,
-body.theme-light .gs-platform-chip,
-body.theme-light .cl-search,
-body.theme-light .cl-filter-chip,
-body.theme-light .pl-btn-secondary,
-body.theme-light .pf-btn,
-body.theme-light .pf-input,
-body.theme-light .pf-select,
-body.theme-light .pf-photo-btn,
-body.theme-light .pf-cancel-btn {
-  background: rgba(255,255,255,0.86) !important;
-  border-color: rgba(17, 32, 50, 0.14) !important;
-  color: #173149 !important;
-}
-
-body.theme-light .app-nav-btn.active,
-body.theme-light .gs-platform-chip.selected,
-body.theme-light .cl-filter-chip.active,
-body.theme-light .pf-btn-green,
-body.theme-light .db-stat-sub.green,
-body.theme-light .db-policy-row-val.green,
-body.theme-light .cl-summary-val.green,
-body.theme-light .pl-info-val.green,
-body.theme-light .pf-stat-val.green,
-body.theme-light .gs-info-val.green {
-  color: #0b8d6d !important;
-  background: rgba(25, 215, 165, 0.12) !important;
-}
-
-body.theme-light .db-loading,
-body.theme-light .cl-loading {
-  background: #eef3f9 !important;
-  color: #4f6378 !important;
-}
-
-body.theme-light .app-topbar-brand,
-body.theme-light .db-name,
-body.theme-light .cl-heading,
-body.theme-light .pl-heading,
-body.theme-light .pf-name,
-body.theme-light .gs-heading {
-  letter-spacing: -0.55px !important;
-  line-height: 1.08 !important;
-}
-
-body.theme-light .app-topbar-sub,
-body.theme-light .db-greeting,
-body.theme-light .db-section-title,
-body.theme-light .cl-section-title,
-body.theme-light .pl-covered-header,
-body.theme-light .pf-title,
-body.theme-light .gs-label,
-body.theme-light .db-reco-head {
-  font-size: 11px !important;
-  letter-spacing: 0.7px !important;
-}
-
-body.theme-light .db-policy-row-key,
-body.theme-light .db-policy-row-val,
-body.theme-light .db-w-label,
-body.theme-light .db-stat-label,
-body.theme-light .db-claim-header,
-body.theme-light .cl-summary-label,
-body.theme-light .cl-claim-date,
-body.theme-light .pl-info-key,
-body.theme-light .pf-label,
-body.theme-light .pf-stat-key,
-body.theme-light .gs-info-key,
-body.theme-light .gs-trust-label {
-  font-size: 11px !important;
-}
-
-body.theme-light .db-stat-value,
-body.theme-light .cl-summary-val,
-body.theme-light .pl-price-amount,
-body.theme-light .pl-forecast-v,
-body.theme-light .gs-plan-price,
-body.theme-light .db-w-score {
-  color: #102033 !important;
-}
-
-@media (min-width: 1024px) {
-  .db-scroll,
-  .cl-inner,
-  .pf-inner,
-  .pl-inner,
-  .gs-inner {
-    max-width: 980px !important;
-  }
-
-  .db-scroll,
-  .cl-inner,
-  .pf-inner,
-  .pl-inner,
-  .gs-inner {
-    padding-left: 24px !important;
-    padding-right: 24px !important;
-  }
-
-  .db-stats,
-  .pf-grid,
-  .cl-summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
+body.theme-dark ::-webkit-scrollbar-thumb {
+  background: rgba(183, 193, 205, 0.22);
+  background-clip: padding-box;
 }

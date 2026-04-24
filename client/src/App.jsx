@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Claims from './pages/Claims';
@@ -12,183 +12,377 @@ function getSavedThemeMode() {
 }
 
 function getSystemTheme() {
-  if (typeof window === 'undefined' || !window.matchMedia) return 'dark';
+  if (typeof window === 'undefined' || !window.matchMedia) return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function formatDate(value) {
+  return new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
 
   .app-shell {
+    min-height: 100vh;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 18px;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background:
-      radial-gradient(circle at top left, rgba(25,215,165,0.12), transparent 30%),
-      radial-gradient(circle at top right, rgba(79,140,255,0.14), transparent 28%),
-      linear-gradient(180deg, #060d18 0%, #081423 48%, #0a1728 100%);
-    font-family: 'DM Sans', sans-serif;
-    overflow: hidden;
+  }
+
+  .app-shell::before,
+  .app-shell::after {
+    content: '';
+    position: fixed;
+    inset: auto;
+    pointer-events: none;
+    z-index: 0;
   }
 
   .app-shell::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-    background-size: 36px 36px;
-    pointer-events: none;
-    opacity: 0.55;
+    width: 220px;
+    height: 220px;
+    top: 24px;
+    right: 22px;
+    background: radial-gradient(circle, rgba(218, 93, 54, 0.13) 0%, transparent 72%);
   }
 
-  .app-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 10px 12px;
+  .app-shell::after {
+    width: 280px;
+    height: 280px;
+    left: -60px;
+    bottom: -40px;
+    background: radial-gradient(circle, rgba(35, 89, 209, 0.12) 0%, transparent 74%);
+  }
+
+  .app-sidebar,
+  .app-main,
+  .app-topbar,
+  .app-notif-panel,
+  .app-command {
     position: relative;
     z-index: 1;
   }
 
-  .app-topbar {
-    height: 68px;
-    margin: 10px 10px 12px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(9, 18, 32, 0.76);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-radius: 20px;
-    box-shadow: 0 16px 40px rgba(0,0,0,0.24);
+  .app-sidebar {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: calc(100vh - 36px);
+    backdrop-filter: blur(14px);
+  }
+
+  .app-mark {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 14px;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 2;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
   }
 
-  .app-topbar-left {
-    min-width: 0;
-  }
-
-  .app-topbar-brand {
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.35px;
-    margin-bottom: 2px;
-  }
-
-  .app-topbar-brand span {
-    color: #00C896;
-  }
-
-  .app-topbar-sub {
-    color: #93a8bc;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-  }
-
-  .app-topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  .app-quick-btn {
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: #c7d4e4;
-    border-radius: 12px;
-    padding: 8px 10px;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
-  }
-
-  .app-quick-btn:hover {
-    border-color: rgba(255,255,255,0.2);
-    color: #fff;
-    background: rgba(255,255,255,0.08);
-    transform: translateY(-1px);
-  }
-
-  .app-top-btn {
-    border: 1px solid rgba(255,255,255,0.09);
-    background: rgba(255,255,255,0.03);
-    color: #c7d4e4;
-    border-radius: 12px;
-    padding: 8px 11px;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
-  }
-
-  .app-top-btn:hover {
-    border-color: rgba(255,255,255,0.18);
-    color: #fff;
-    background: rgba(255,255,255,0.06);
-    transform: translateY(-1px);
-  }
-
-  .app-theme-btn {
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: #d4dfeb;
-    border-radius: 12px;
-    padding: 8px 10px;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s, transform 0.2s;
-    white-space: nowrap;
-  }
-
-  .app-theme-btn:hover {
-    color: #fff;
-    border-color: rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.08);
-    transform: translateY(-1px);
-  }
-
-  .app-top-icon-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.09);
-    background: rgba(255,255,255,0.03);
-    color: #c7d4e4;
+  .app-mark-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 42%, #ffd7b8 58%));
+    color: #fff7ee;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    position: relative;
-    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
+    font-size: 16px;
+    box-shadow: 0 12px 24px rgba(218, 93, 54, 0.22);
   }
 
-  .app-top-icon-btn:hover {
-    border-color: rgba(255,255,255,0.18);
-    color: #fff;
-    background: rgba(255,255,255,0.06);
+  .app-mark-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .app-mark-sub {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-top: 2px;
+  }
+
+  .app-worker-card {
+    border-radius: 22px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card-strong) 90%, var(--accent) 10%), var(--bg-card-strong));
+    border: 1px solid var(--line);
+    padding: 16px;
+  }
+
+  .app-worker-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .app-worker-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--accent) 22%, var(--bg-ink) 78%);
+    color: #fff5ea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-family: var(--font-display);
+  }
+
+  .app-worker-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .app-worker-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.11em;
+    font-size: 0.68rem;
+  }
+
+  .app-worker-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .app-worker-meta {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+
+  .app-signal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .app-signal-card {
+    border-radius: 16px;
+    background: var(--bg-tint);
+    border: 1px solid var(--line);
+    padding: 12px;
+  }
+
+  .app-signal-k {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.64rem;
+    margin-bottom: 6px;
+  }
+
+  .app-signal-v {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .app-nav {
+    display: grid;
+    gap: 8px;
+  }
+
+  .app-nav-btn {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 18px;
+    color: var(--text-muted);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .app-nav-btn:hover {
+    transform: translateX(2px);
+    background: var(--bg-tint);
+    border-color: var(--line);
+    color: var(--text);
+  }
+
+  .app-nav-btn.active {
+    background: var(--bg-ink);
+    color: var(--text-inverse);
+  }
+
+  .app-nav-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .app-nav-copy {
+    min-width: 0;
+  }
+
+  .app-nav-title {
+    font-weight: 700;
+    font-size: 0.93rem;
+  }
+
+  .app-nav-sub {
+    font-size: 0.78rem;
+    color: inherit;
+    opacity: 0.75;
+    margin-top: 2px;
+  }
+
+  .app-side-actions {
+    margin-top: auto;
+    display: grid;
+    gap: 8px;
+  }
+
+  .app-side-btn {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .app-side-btn.primary {
+    background: var(--accent);
+    border-color: transparent;
+    color: #fff6ee;
+  }
+
+  .app-main {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .app-topbar {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    backdrop-filter: blur(14px);
+  }
+
+  .app-topbar-copy {
+    min-width: 0;
+  }
+
+  .app-topbar-label {
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.68rem;
+    margin-bottom: 4px;
+  }
+
+  .app-topbar-title {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+
+  .app-topbar-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  .app-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .app-chip-btn,
+  .app-icon-btn {
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .app-chip-btn {
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+
+  .app-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-size: 15px;
+  }
+
+  .app-chip-btn:hover,
+  .app-icon-btn:hover,
+  .app-side-btn:hover {
+    border-color: var(--line-strong);
     transform: translateY(-1px);
   }
 
   .app-notif-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #FFB347;
-    border: 1px solid #0D1E30;
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    border: 2px solid var(--bg-card-strong);
+  }
+
+  .app-content {
+    min-height: 0;
+    overflow: auto;
+    background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 32px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px);
   }
 
   .app-notif-wrap {
@@ -198,327 +392,156 @@ const css = `
   .app-notif-panel {
     position: absolute;
     right: 0;
-    top: 42px;
-    width: min(340px, calc(100vw - 24px));
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.09);
-    background: linear-gradient(180deg, rgba(16,27,45,0.96) 0%, rgba(9,18,32,0.98) 100%);
-    box-shadow: 0 20px 48px rgba(0,0,0,0.42);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    z-index: 40;
+    top: calc(100% + 10px);
+    width: min(360px, calc(100vw - 48px));
+    background: var(--bg-card-strong);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
     overflow: hidden;
   }
 
   .app-notif-head {
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.2px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
   }
 
   .app-notif-clear {
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.03);
-    color: #bcd0e3;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 500;
-    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.78rem;
     cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-  }
-
-  .app-notif-clear:hover {
-    color: #fff;
-    border-color: rgba(255,255,255,0.22);
-    background: rgba(255,255,255,0.06);
+    font-weight: 700;
   }
 
   .app-notif-list {
-    max-height: 280px;
-    overflow-y: auto;
+    max-height: 320px;
+    overflow: auto;
   }
 
   .app-notif-item {
-    padding: 11px 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    color: #afc0d2;
-    font-size: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
     line-height: 1.45;
-    transition: background 0.2s, color 0.2s;
+    color: var(--text-muted);
   }
 
   .app-notif-item.unread {
-    background: rgba(25,215,165,0.05);
-    color: #d5e9fb;
-  }
-
-  .app-notif-item.read {
-    color: #94a9bc;
-  }
-
-  .app-notif-item:last-child {
-    border-bottom: none;
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent-soft) 52%, transparent);
   }
 
   .app-notif-empty {
-    padding: 20px 12px;
-    color: #7f93a8;
-    font-size: 12px;
+    color: var(--text-muted);
     text-align: center;
-  }
-
-  .app-top-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: 1px solid rgba(25,215,165,0.28);
-    background: linear-gradient(135deg, rgba(25,215,165,0.18), rgba(79,140,255,0.12));
-    color: #66f0c9;
-    font-size: 13px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-    overflow: hidden;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.16);
-  }
-
-  .app-top-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .app-top-avatar:hover {
-    opacity: 0.92;
-    transform: translateY(-1px);
-  }
-
-  .app-nav {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    margin: 0 10px 10px;
-    background: rgba(9, 18, 32, 0.74);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    box-shadow: 0 16px 40px rgba(0,0,0,0.24);
-    padding: 8px;
-    gap: 8px;
-    position: relative;
-    z-index: 2;
-  }
-
-  .app-nav-btn {
-    border: none;
-    background: transparent;
-    border-radius: 14px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    color: #91a7bc;
-    padding: 8px 4px;
-    transition: background 0.2s, color 0.2s, transform 0.2s;
-  }
-
-  .app-nav-head {
-    display: none;
-  }
-
-  .app-kbd {
-    border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.06);
-    color: #d6e2ef;
-    border-radius: 6px;
-    padding: 1px 6px;
-    font-size: 10px;
-    line-height: 1.4;
-    margin-left: 6px;
+    padding: 20px 16px;
   }
 
   .app-command-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 120;
-    background: rgba(2, 9, 18, 0.66);
-    backdrop-filter: blur(5px);
+    background: rgba(17, 22, 29, 0.4);
+    backdrop-filter: blur(4px);
     display: flex;
-    align-items: flex-start;
     justify-content: center;
+    align-items: flex-start;
     padding: 72px 18px 18px;
+    z-index: 40;
   }
 
   .app-command {
     width: min(640px, 100%);
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: linear-gradient(180deg, rgba(12,24,40,0.95) 0%, rgba(7,15,27,0.98) 100%);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    background: var(--bg-card-strong);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
     overflow: hidden;
   }
 
   .app-command-input {
     width: 100%;
     border: none;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
     background: transparent;
-    color: #eaf2fb;
-    padding: 14px 16px;
-    font-size: 14px;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+    padding: 16px 18px;
     outline: none;
+    font-size: 0.96rem;
   }
 
   .app-command-list {
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 8px;
+    padding: 10px;
     display: grid;
-    gap: 6px;
+    gap: 8px;
+    max-height: 340px;
+    overflow: auto;
   }
 
   .app-command-item {
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 11px;
-    background: rgba(255,255,255,0.03);
-    color: #cad8e7;
-    padding: 10px 11px;
-    font-size: 12px;
+    width: 100%;
     text-align: left;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 12px 14px;
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s, color 0.2s;
   }
 
-  .app-command-item:hover {
-    border-color: rgba(25,215,165,0.3);
-    background: rgba(25,215,165,0.08);
-    color: #f3f8ff;
+  .app-command-item small {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
   }
 
   .app-command-empty {
-    color: #8ca0b6;
-    font-size: 12px;
+    padding: 18px;
     text-align: center;
-    padding: 14px 10px 16px;
+    color: var(--text-muted);
   }
 
-  .app-nav-btn.active {
-    color: #19d7a5;
-    background: rgba(25,215,165,0.1);
-  }
-
-  .app-nav-btn:hover {
-    transform: translateY(-1px);
-    color: #fff;
-  }
-
-  .app-nav-icon {
-    font-size: 14px;
-    line-height: 1;
-  }
-
-  .app-nav-label {
-    font-size: 11px;
-    line-height: 1;
-    letter-spacing: 0.2px;
-  }
-
-  @media (min-width: 1024px) {
+  @media (max-width: 1023px) {
     .app-shell {
-      display: grid;
-      grid-template-columns: 250px minmax(0, 1fr);
-      grid-template-rows: 78px minmax(0, 1fr);
-      grid-template-areas:
-        'nav topbar'
-        'nav content';
-      height: 100vh;
-      gap: 10px;
+      grid-template-columns: 1fr;
+      padding: 12px;
+    }
+
+    .app-sidebar {
+      min-height: auto;
+      gap: 14px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .app-shell {
       padding: 10px;
+      gap: 10px;
+    }
+
+    .app-sidebar,
+    .app-topbar,
+    .app-content {
+      border-radius: 24px;
     }
 
     .app-topbar {
-      grid-area: topbar;
-      margin: 0;
-      border-radius: 16px;
-      height: 100%;
-      padding: 0 18px;
-    }
-
-    .app-content {
-      grid-area: content;
-      padding: 0;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      background: rgba(8, 17, 31, 0.38);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      overflow: auto;
-    }
-
-    .app-nav {
-      grid-area: nav;
-      margin: 0;
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
+      align-items: flex-start;
       flex-direction: column;
-      gap: 8px;
-      align-items: stretch;
-      justify-content: flex-start;
     }
 
-    .app-nav-btn {
-      flex-direction: row;
-      justify-content: flex-start;
-      gap: 10px;
+    .app-toolbar {
       width: 100%;
-      text-align: left;
-      padding: 11px 12px;
-      border-radius: 12px;
+      justify-content: flex-start;
     }
 
-    .app-nav-icon {
-
-    .app-nav-head {
-      display: block;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      padding: 12px;
-      margin-bottom: 8px;
-    }
-
-    .app-nav-title {
-      color: #eff6ff;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 3px;
-      letter-spacing: -0.2px;
-    }
-
-    .app-nav-sub {
-      color: #8da2b7;
-      font-size: 11px;
-    }
-      font-size: 16px;
-    }
-
-    .app-nav-label {
-      font-size: 12px;
-      line-height: 1.2;
+    .app-signal-grid {
+      grid-template-columns: 1fr;
     }
   }
 `;
@@ -543,11 +566,6 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('gigshield_theme_mode', themeMode);
-    if (themeMode === 'system') {
-      localStorage.removeItem('gigshield_theme');
-    } else {
-      localStorage.setItem('gigshield_theme', theme);
-    }
     document.body.classList.remove('theme-dark', 'theme-light');
     document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
   }, [theme, themeMode]);
@@ -561,11 +579,10 @@ export default function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    if (themeMode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return;
+    if (themeMode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return undefined;
 
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const applySystemTheme = (event) => setTheme(event.matches ? 'dark' : 'light');
-
     setTheme(media.matches ? 'dark' : 'light');
 
     if (media.addEventListener) {
@@ -577,25 +594,21 @@ export default function App() {
     return () => media.removeListener(applySystemTheme);
   }, [themeMode]);
 
-  // Load user from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('gigshield_worker');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setWorker(parsed);
-      setScreen('dashboard');
-    }
+    if (!saved) return;
+    const parsed = JSON.parse(saved);
+    setWorker(parsed);
+    setScreen('dashboard');
   }, []);
 
-  // After onboarding
-  function onRegistered(w) {
-    localStorage.setItem('gigshield_worker', JSON.stringify(w));
-    setWorker(w);
+  function onRegistered(nextWorker) {
+    localStorage.setItem('gigshield_worker', JSON.stringify(nextWorker));
+    setWorker(nextWorker);
     setTab('dashboard');
     setScreen('policy');
   }
 
-  // After buying policy
   function onPolicyPurchased(updatedWorker) {
     localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
     setWorker(updatedWorker);
@@ -603,7 +616,6 @@ export default function App() {
     setScreen('dashboard');
   }
 
-  // Logout
   function onLogout() {
     localStorage.removeItem('gigshield_worker');
     setWorker(null);
@@ -617,9 +629,7 @@ export default function App() {
 
   function toggleTheme() {
     document.body.classList.add('theme-transition');
-    window.setTimeout(() => {
-      document.body.classList.remove('theme-transition');
-    }, 320);
+    window.setTimeout(() => document.body.classList.remove('theme-transition'), 320);
     setThemeMode((prev) => {
       if (prev === 'system') return 'dark';
       if (prev === 'dark') return 'light';
@@ -627,18 +637,34 @@ export default function App() {
     });
   }
 
+  const tabs = [
+    { id: 'dashboard', label: 'Overview', sub: 'Risk desk', icon: '◧' },
+    { id: 'claims', label: 'Claims', sub: 'Payout history', icon: '◎' },
+    { id: 'profile', label: 'Profile', sub: 'Ops settings', icon: '◌' },
+  ];
+
   const quickActions = [
-    { id: 'qa-home', label: 'Go to Dashboard', run: () => setTab('dashboard') },
-    { id: 'qa-claims', label: 'Open Claims', run: () => setTab('claims') },
-    { id: 'qa-profile', label: 'Open Profile', run: () => setTab('profile') },
-    { id: 'qa-policy', label: 'Open Policy Purchase', run: () => setScreen('policy') },
-    { id: 'qa-theme', label: 'Cycle Theme Mode', run: toggleTheme },
-    { id: 'qa-logout', label: 'Sign Out', run: onLogout },
+    { id: 'qa-home', label: 'Open dashboard', hint: 'Return to live risk overview', run: () => setTab('dashboard') },
+    { id: 'qa-claims', label: 'Open claims', hint: 'Review payouts and status', run: () => setTab('claims') },
+    { id: 'qa-profile', label: 'Open profile', hint: 'Manage account and preferences', run: () => setTab('profile') },
+    { id: 'qa-policy', label: 'Open policy studio', hint: 'Compare cover and activate protection', run: () => setScreen('policy') },
+    { id: 'qa-theme', label: 'Change theme mode', hint: 'Cycle system, dark, and light', run: toggleTheme },
+    { id: 'qa-logout', label: 'Sign out', hint: 'Clear the local session', run: onLogout },
   ];
 
   const filteredQuickActions = quickActions.filter((action) =>
     action.label.toLowerCase().includes(quickQuery.trim().toLowerCase())
   );
+
+  const workerImage = worker?.profileImage || '';
+  const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
+  const activeTab = tabs.find((item) => item.id === tab) || tabs[0];
+  const unreadNotifications = notifications.filter((notification) => !readNotifIds[notification.id]);
+
+  const shellSignals = useMemo(() => ([
+    { key: 'Zone', value: worker?.zone?.replace(/_/g, ' ') || 'Unassigned' },
+    { key: 'Risk tier', value: worker?.premiumTier || 'Pending' },
+  ]), [worker]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -646,11 +672,8 @@ export default function App() {
       if (isQuickShortcut) {
         event.preventDefault();
         setQuickOpen(true);
-        return;
       }
-      if (event.key === 'Escape') {
-        setQuickOpen(false);
-      }
+      if (event.key === 'Escape') setQuickOpen(false);
     }
 
     document.addEventListener('keydown', onKeyDown);
@@ -665,45 +688,31 @@ export default function App() {
     window.setTimeout(() => quickInputRef.current?.focus(), 0);
   }, [quickOpen]);
 
-  // Main app (Dashboard + Tabs)
-  const tabs = [
-    { id: 'dashboard', label: 'Home', icon: '🏠' },
-    { id: 'claims', label: 'Claims', icon: '📄' },
-    { id: 'profile', label: 'Profile', icon: '👤' }
-  ];
-  const activeTabLabel = tabs.find((item) => item.id === tab)?.label || 'Home';
-  const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
-  const workerImage = worker?.profileImage || '';
-  const unreadNotifications = notifications.filter((notification) => !readNotifIds[notification.id]);
-  const showNotifDot = unreadNotifications.length > 0 && !notifOpen;
-
   useEffect(() => {
     if (!worker?._id) return;
     try {
       const saved = localStorage.getItem(`gigshield_read_notifications_${worker._id}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === 'object') {
-          setReadNotifIds(parsed);
-          return;
-        }
+      if (!saved) {
+        setReadNotifIds({});
+        return;
       }
+      const parsed = JSON.parse(saved);
+      setReadNotifIds(parsed && typeof parsed === 'object' ? parsed : {});
     } catch {
-      // no-op
+      setReadNotifIds({});
     }
-    setReadNotifIds({});
   }, [worker?._id]);
 
   useEffect(() => {
     if (!worker?._id) return;
     localStorage.setItem(`gigshield_read_notifications_${worker._id}`, JSON.stringify(readNotifIds));
-  }, [worker?._id, readNotifIds]);
+  }, [readNotifIds, worker?._id]);
 
   useEffect(() => {
     if (!notifOpen || notifications.length === 0) return;
     setReadNotifIds((prev) => {
-      let changed = false;
       const next = { ...prev };
+      let changed = false;
       notifications.forEach((notification) => {
         if (!next[notification.id]) {
           next[notification.id] = true;
@@ -714,20 +723,8 @@ export default function App() {
     });
   }, [notifOpen, notifications]);
 
-  function markAllNotificationsAsRead() {
-    if (notifications.length === 0) return;
-    setReadNotifIds((prev) => {
-      const next = { ...prev };
-      notifications.forEach((notification) => {
-        next[notification.id] = true;
-      });
-      return next;
-    });
-  }
-
   useEffect(() => {
-    if (!worker?._id) return;
-
+    if (!worker?._id) return undefined;
     let alive = true;
 
     async function loadNotifications() {
@@ -738,72 +735,54 @@ export default function App() {
 
       if (!alive) return;
 
-      const claims = claimsRes.status === 'fulfilled' ? (claimsRes.value.claims || []) : [];
+      const claims = claimsRes.status === 'fulfilled' ? claimsRes.value.claims || [] : [];
       const policy = policyRes.status === 'fulfilled' ? policyRes.value.policy : null;
-
-      const messages = [];
+      const items = [];
 
       if (policy) {
+        items.push({
+          id: `policy-${policy._id || 'active'}`,
+          ts: Date.now(),
+          text: `Coverage live in ${worker.zone?.replace(/_/g, ' ') || 'your zone'} until ${formatDate(policy.endDate)}.`,
+        });
         if ((policy.daysLeft ?? 0) <= 2) {
-          messages.push({
-            id: `policy-expiry-${policy._id || 'active'}`,
-            ts: Date.now(),
-            text: `Policy reminder: your current coverage expires in ${policy.daysLeft} day(s).`,
-          });
-        } else {
-          messages.push({
-            id: `policy-active-${policy._id || 'active'}`,
+          items.push({
+            id: `policy-renew-${policy._id || 'active'}`,
             ts: Date.now() - 1,
-            text: `Coverage active: ₹${policy.coverageAmount}/day protection is running for your zone.`,
+            text: `Renewal window is open. ${policy.daysLeft} day(s) left on your current cover.`,
           });
         }
       } else {
-        messages.push({
+        items.push({
           id: 'policy-missing',
-          ts: Date.now() - 2,
-          text: 'No active policy right now. Buy a plan to keep disruption protection enabled.',
+          ts: Date.now(),
+          text: 'No active policy detected. Open Policy Studio to restore protection.',
         });
       }
 
-      const sortedClaims = [...claims]
+      claims
+        .slice()
         .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        .slice(0, 8);
+        .slice(0, 6)
+        .forEach((claim, index) => {
+          const trigger = (claim.triggerType || 'disruption').replace(/_/g, ' ');
+          const status = claim.status || 'processing';
+          const amount = claim.payoutAmount ? ` ₹${claim.payoutAmount}.` : '';
+          const copy =
+            status === 'paid'
+              ? `Claim paid for ${trigger}.${amount}`
+              : status === 'rejected'
+                ? `Claim rejected for ${trigger}.`
+                : `Claim processing for ${trigger}.`;
 
-      sortedClaims.forEach((claim, index) => {
-        const status = claim.status || 'processing';
-        const trigger = (claim.triggerType || 'disruption').replace(/_/g, ' ');
-        const time = new Date(claim.createdAt || Date.now()).getTime();
-
-        if (status === 'paid') {
-          messages.push({
-            id: `claim-paid-${claim._id || index}`,
-            ts: time,
-            text: `Payout update: ₹${claim.payoutAmount || 0} credited for ${trigger}.`,
+          items.push({
+            id: `${status}-${claim._id || index}`,
+            ts: new Date(claim.createdAt || Date.now()).getTime(),
+            text: copy,
           });
-          return;
-        }
-
-        if (status === 'rejected') {
-          messages.push({
-            id: `claim-rejected-${claim._id || index}`,
-            ts: time,
-            text: `Claim update: ${trigger} claim was reviewed and marked rejected.`,
-          });
-          return;
-        }
-
-        messages.push({
-          id: `claim-processing-${claim._id || index}`,
-          ts: time,
-          text: `Disruption alert: ${trigger} detected. Claim verification is in progress.`,
         });
-      });
 
-      setNotifications(
-        messages
-          .sort((a, b) => b.ts - a.ts)
-          .slice(0, 8)
-      );
+      setNotifications(items.sort((a, b) => b.ts - a.ts).slice(0, 8));
     }
 
     loadNotifications();
@@ -813,24 +792,29 @@ export default function App() {
       alive = false;
       clearInterval(timer);
     };
-  }, [worker?._id]);
+  }, [worker?._id, worker?.zone]);
 
   useEffect(() => {
     function handleOutside(event) {
       if (!notifOpen) return;
-      if (notifWrapRef.current && !notifWrapRef.current.contains(event.target)) {
-        setNotifOpen(false);
-      }
+      if (notifWrapRef.current && !notifWrapRef.current.contains(event.target)) setNotifOpen(false);
     }
 
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [notifOpen]);
 
-  // Screens
-  if (screen === 'onboarding') {
-    return <Onboarding onComplete={onRegistered} />;
+  function markAllNotificationsAsRead() {
+    setReadNotifIds((prev) => {
+      const next = { ...prev };
+      notifications.forEach((notification) => {
+        next[notification.id] = true;
+      });
+      return next;
+    });
   }
+
+  if (screen === 'onboarding') return <Onboarding onComplete={onRegistered} />;
 
   if (screen === 'policy') {
     return (
@@ -846,99 +830,139 @@ export default function App() {
     <div className="app-shell">
       <style>{css}</style>
 
-      <div className="app-topbar">
-        <div className="app-topbar-left">
-          <div className="app-topbar-brand">GigShield <span>AI</span></div>
-          <div className="app-topbar-sub">{activeTabLabel}</div>
+      <aside className="app-sidebar">
+        <div className="app-mark">
+          <div className="app-mark-badge">GS</div>
+          <div>
+            <div className="app-mark-title">GigShield</div>
+            <div className="app-mark-sub">Field Operations Cover</div>
+          </div>
         </div>
-        <div className="app-topbar-actions">
-          <button className="app-quick-btn" onClick={() => setQuickOpen(true)}>
-            Quick actions <span className="app-kbd">Ctrl K</span>
-          </button>
-          <button className="app-theme-btn" onClick={toggleTheme}>
-            {themeMode === 'system' ? '🖥 System' : themeMode === 'dark' ? '🌙 Dark' : '☀ Light'}
-          </button>
-          <button className="app-top-btn" onClick={() => setScreen('policy')}>Policy</button>
-          <div className="app-notif-wrap" ref={notifWrapRef}>
-            <button className="app-top-icon-btn" onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
-              🔔
-              {showNotifDot && <span className="app-notif-dot" />}
+
+        <div className="app-worker-card">
+          <div className="app-worker-row">
+            <div className="app-worker-avatar">
+              {workerImage ? <img src={workerImage} alt="Profile" /> : workerInitial}
+            </div>
+            <div>
+              <div className="app-worker-label">Active member</div>
+              <div className="app-worker-name">{worker?.name || 'Worker'}</div>
+              <div className="app-worker-meta">{worker?.platform || 'Platform not set'}</div>
+            </div>
+          </div>
+
+          <div className="app-signal-grid">
+            {shellSignals.map((signal) => (
+              <div className="app-signal-card" key={signal.key}>
+                <div className="app-signal-k">{signal.key}</div>
+                <div className="app-signal-v">{signal.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <nav className="app-nav">
+          {tabs.map((item) => (
+            <button
+              key={item.id}
+              className={`app-nav-btn ${tab === item.id ? 'active' : ''}`}
+              onClick={() => setTab(item.id)}
+            >
+              <span className="app-nav-icon">{item.icon}</span>
+              <span className="app-nav-copy">
+                <span className="app-nav-title">{item.label}</span>
+                <span className="app-nav-sub">{item.sub}</span>
+              </span>
             </button>
-            {notifOpen && (
-              <div className="app-notif-panel">
-                <div className="app-notif-head">
-                  <span>Notifications</span>
-                  {unreadNotifications.length > 0 && (
-                    <button className="app-notif-clear" onClick={markAllNotificationsAsRead}>
-                      Mark all read
-                    </button>
+          ))}
+        </nav>
+
+        <div className="app-side-actions">
+          <button className="app-side-btn primary" onClick={() => setScreen('policy')}>
+            Open Policy Studio
+          </button>
+          <button className="app-side-btn" onClick={() => setQuickOpen(true)}>
+            Command bar
+          </button>
+        </div>
+      </aside>
+
+      <main className="app-main">
+        <div className="app-topbar">
+          <div className="app-topbar-copy">
+            <div className="app-topbar-label">Operations Workspace</div>
+            <div className="app-topbar-title">{activeTab.label}</div>
+            <div className="app-topbar-sub">
+              {tab === 'dashboard' && 'Watch live disruption risk, policy health, and shift readiness.'}
+              {tab === 'claims' && 'Track auto-generated claims, export records, and audit status.'}
+              {tab === 'profile' && 'Manage identity, safety preferences, and support settings.'}
+            </div>
+          </div>
+
+          <div className="app-toolbar">
+            <button className="app-chip-btn" onClick={() => setQuickOpen(true)}>Quick actions</button>
+            <button className="app-chip-btn" onClick={toggleTheme}>
+              {themeMode === 'system' ? 'System mode' : themeMode === 'dark' ? 'Dark mode' : 'Light mode'}
+            </button>
+            <div className="app-notif-wrap" ref={notifWrapRef}>
+              <button className="app-icon-btn" aria-label="Notifications" onClick={() => setNotifOpen((v) => !v)}>
+                ◔
+                {unreadNotifications.length > 0 && <span className="app-notif-dot" />}
+              </button>
+
+              {notifOpen && (
+                <div className="app-notif-panel">
+                  <div className="app-notif-head">
+                    <span>Alerts</span>
+                    {unreadNotifications.length > 0 && (
+                      <button className="app-notif-clear" onClick={markAllNotificationsAsRead}>
+                        Mark read
+                      </button>
+                    )}
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <div className="app-notif-empty">No alerts right now.</div>
+                  ) : (
+                    <div className="app-notif-list">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`app-notif-item ${readNotifIds[notification.id] ? 'read' : 'unread'}`}
+                        >
+                          {notification.text}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {notifications.length === 0 ? (
-                  <div className="app-notif-empty">No new messages.</div>
-                ) : (
-                  <div className="app-notif-list">
-                    {notifications.map((notification) => (
-                      <div
-                        className={`app-notif-item ${readNotifIds[notification.id] ? 'read' : 'unread'}`}
-                        key={notification.id}
-                      >
-                        {notification.text}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          <button className="app-top-avatar" onClick={() => setTab('profile')}>
-            {workerImage ? (
-              <img src={workerImage} alt="Profile" className="app-top-avatar-img" />
-            ) : (
-              workerInitial
-            )}
-          </button>
         </div>
-      </div>
 
-      <div className="app-content">
-        {tab === 'dashboard' && (
-          <Dashboard
-            worker={worker}
-            onBuyPolicy={() => setScreen('policy')}
-            onOpenClaims={() => setTab('claims')}
-            showHeader={false}
-          />
-        )}
+        <div className="app-content">
+          {tab === 'dashboard' && (
+            <Dashboard
+              worker={worker}
+              onBuyPolicy={() => setScreen('policy')}
+              onOpenClaims={() => setTab('claims')}
+              showHeader={false}
+            />
+          )}
 
-        {tab === 'claims' && <Claims worker={worker} />}
+          {tab === 'claims' && <Claims worker={worker} />}
 
-        {tab === 'profile' && (
-          <Profile
-            worker={worker}
-            onLogout={onLogout}
-            onOpenPolicy={() => setScreen('policy')}
-            onUpdateProfile={onUpdateProfile}
-          />
-        )}
-      </div>
-
-      <div className="app-nav">
-        <div className="app-nav-head">
-          <div className="app-nav-title">Operations Console</div>
-          <div className="app-nav-sub">Protection intelligence for gig workers</div>
+          {tab === 'profile' && (
+            <Profile
+              worker={worker}
+              onLogout={onLogout}
+              onOpenPolicy={() => setScreen('policy')}
+              onUpdateProfile={onUpdateProfile}
+            />
+          )}
         </div>
-        {tabs.map((tabItem) => (
-          <button
-            key={tabItem.id}
-            onClick={() => setTab(tabItem.id)}
-            className={`app-nav-btn ${tab === tabItem.id ? 'active' : ''}`}
-          >
-            <span className="app-nav-icon">{tabItem.icon}</span>
-            <span className="app-nav-label">{tabItem.label}</span>
-          </button>
-        ))}
-      </div>
+      </main>
 
       {quickOpen && (
         <div className="app-command-backdrop" onClick={() => setQuickOpen(false)}>
@@ -946,15 +970,16 @@ export default function App() {
             <input
               ref={quickInputRef}
               className="app-command-input"
-              placeholder="Search actions..."
+              placeholder="Search actions"
               value={quickQuery}
               onChange={(event) => setQuickQuery(event.target.value)}
             />
-            <div className="app-command-list">
-              {filteredQuickActions.length === 0 ? (
-                <div className="app-command-empty">No matching actions.</div>
-              ) : (
-                filteredQuickActions.map((action) => (
+
+            {filteredQuickActions.length === 0 ? (
+              <div className="app-command-empty">No matching actions.</div>
+            ) : (
+              <div className="app-command-list">
+                {filteredQuickActions.map((action) => (
                   <button
                     key={action.id}
                     className="app-command-item"
@@ -964,10 +989,11 @@ export default function App() {
                     }}
                   >
                     {action.label}
+                    <small>{action.hint}</small>
                   </button>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
