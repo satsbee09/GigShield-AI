@@ -9,6 +9,12 @@ const ZONES = [
   { label: 'Gurugram', value: 'gurugram', lat: 28.4595, lon: 77.0266 },
   { label: 'Noida', value: 'noida', lat: 28.5355, lon: 77.391 },
 ];
+const PAYOUT_METHODS = ['UPI', 'Bank transfer', 'Wallet'];
+const NOTIFICATION_MODES = [
+  { value: 'all', label: 'All updates' },
+  { value: 'critical', label: 'Critical only' },
+  { value: 'muted', label: 'Mostly muted' },
+];
 
 const css = `
   .pf-screen {
@@ -32,7 +38,7 @@ const css = `
   .pf-hero {
     padding: 20px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
     gap: 16px;
   }
 
@@ -56,9 +62,9 @@ const css = `
   .pf-lead,
   .pf-sub,
   .pf-row-copy,
-  .pf-info-copy,
   .pf-help-text,
-  .pf-help-item {
+  .pf-help-item,
+  .pf-chip-copy {
     color: var(--text-muted);
     line-height: 1.55;
   }
@@ -100,6 +106,7 @@ const css = `
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    margin-top: 16px;
   }
 
   .pf-chip {
@@ -111,13 +118,13 @@ const css = `
 
   .pf-chip-value {
     font-family: var(--font-display);
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     margin: 8px 0 4px;
   }
 
   .pf-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
     gap: 16px;
   }
 
@@ -133,6 +140,12 @@ const css = `
 
   .pf-form {
     display: grid;
+    gap: 12px;
+  }
+
+  .pf-two-up {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
 
@@ -306,7 +319,8 @@ const css = `
       padding: 16px;
     }
 
-    .pf-chip-grid {
+    .pf-chip-grid,
+    .pf-two-up {
       grid-template-columns: 1fr;
     }
 
@@ -322,6 +336,8 @@ const css = `
 
 export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfile }) {
   const zoneName = worker?.zone?.replace(/_/g, ' ') || 'Not set';
+  const preferences = worker?.preferences || {};
+  const operations = worker?.operations || {};
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -333,6 +349,10 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
     platform: worker?.platform || PLATFORMS[0],
     zone: worker?.zone || ZONES[0].value,
     profileImage: worker?.profileImage || '',
+    emergencyContact: operations.emergencyContact || '',
+    payoutMethod: operations.payoutMethod || PAYOUT_METHODS[0],
+    notificationMode: preferences.notificationMode || 'all',
+    autoRefresh: preferences.autoRefresh !== false,
   });
 
   useEffect(() => {
@@ -342,6 +362,10 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       platform: worker?.platform || PLATFORMS[0],
       zone: worker?.zone || ZONES[0].value,
       profileImage: worker?.profileImage || '',
+      emergencyContact: worker?.operations?.emergencyContact || '',
+      payoutMethod: worker?.operations?.payoutMethod || PAYOUT_METHODS[0],
+      notificationMode: worker?.preferences?.notificationMode || 'all',
+      autoRefresh: worker?.preferences?.autoRefresh !== false,
     });
   }, [worker]);
 
@@ -373,16 +397,25 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   function handleSaveProfile() {
     const name = form.name.trim();
     const phone = form.phone.trim();
+    const emergencyContact = form.emergencyContact.trim();
+
     if (!name) {
       setError('Name is required.');
       return;
     }
+
     if (!/^\d{10}$/.test(phone)) {
       setError('Enter a valid 10-digit phone number.');
       return;
     }
 
+    if (emergencyContact && !/^\d{10}$/.test(emergencyContact)) {
+      setError('Emergency contact should be a valid 10-digit number.');
+      return;
+    }
+
     const selectedZone = ZONES.find((zone) => zone.value === form.zone);
+
     onUpdateProfile({
       ...worker,
       name,
@@ -392,11 +425,21 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       zoneLat: selectedZone?.lat ?? worker?.zoneLat,
       zoneLon: selectedZone?.lon ?? worker?.zoneLon,
       profileImage: form.profileImage,
+      preferences: {
+        ...(worker?.preferences || {}),
+        notificationMode: form.notificationMode,
+        autoRefresh: form.autoRefresh,
+      },
+      operations: {
+        ...(worker?.operations || {}),
+        emergencyContact,
+        payoutMethod: form.payoutMethod,
+      },
     });
 
     setError('');
     setIsEditing(false);
-    setToastMessage('Profile saved');
+    setToastMessage('Profile and preferences saved');
     setShowToast(true);
   }
 
@@ -415,9 +458,9 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
           <section className="pf-hero">
             <div>
               <div className="pf-kicker">Profile studio</div>
-              <h1 className="pf-title">Personal settings without the demo-app feel.</h1>
+              <h1 className="pf-title">Account settings that actually affect the workspace.</h1>
               <p className="pf-lead">
-                This screen now behaves more like an operations profile: clean identity details, editable field data, and support shortcuts that feel deliberate instead of filler.
+                This section now does more than edit basic identity. You can control payout setup, alert behavior, and refresh preferences so the app feels like a working operations product.
               </p>
             </div>
 
@@ -433,16 +476,16 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                 </div>
               </div>
 
-              <div className="pf-chip-grid" style={{ marginTop: 16 }}>
+              <div className="pf-chip-grid">
                 <div className="pf-chip">
-                  <div className="pf-card-kicker">Weekly premium</div>
-                  <div className="pf-chip-value">₹{worker?.weeklyPremium || 0}</div>
-                  <div className="pf-sub">Current plan cost</div>
+                  <div className="pf-card-kicker">Payout method</div>
+                  <div className="pf-chip-value">{operations.payoutMethod || 'UPI'}</div>
+                  <div className="pf-chip-copy">Current payout destination type.</div>
                 </div>
                 <div className="pf-chip">
-                  <div className="pf-card-kicker">Risk tier</div>
-                  <div className="pf-chip-value">{worker?.premiumTier || 'N/A'}</div>
-                  <div className="pf-sub">Zone-based pricing tier</div>
+                  <div className="pf-card-kicker">Alerts mode</div>
+                  <div className="pf-chip-value">{preferences.notificationMode || 'all'}</div>
+                  <div className="pf-chip-copy">How much activity you want surfaced.</div>
                 </div>
               </div>
             </div>
@@ -450,8 +493,8 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
           <section className="pf-grid">
             <div className="pf-card">
-              <div className="pf-kicker">Identity</div>
-              <div className="pf-card-title">{isEditing ? 'Edit profile details' : 'Account details'}</div>
+              <div className="pf-kicker">Account</div>
+              <div className="pf-card-title">{isEditing ? 'Edit profile and preferences' : 'Identity and operations setup'}</div>
 
               {!isEditing ? (
                 <>
@@ -471,10 +514,17 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                   </div>
                   <div className="pf-row">
                     <div>
-                      <div className="pf-row-title">Contact</div>
-                      <div className="pf-row-copy">Primary mobile for sign-in and alerts.</div>
+                      <div className="pf-row-title">Emergency contact</div>
+                      <div className="pf-row-copy">Visible inside your operations profile for support and safety workflows.</div>
                     </div>
-                    <div className="pf-row-value">+91 {worker?.phone || '-'}</div>
+                    <div className="pf-row-value">{operations.emergencyContact ? `+91 ${operations.emergencyContact}` : 'Not added'}</div>
+                  </div>
+                  <div className="pf-row">
+                    <div>
+                      <div className="pf-row-title">Auto refresh</div>
+                      <div className="pf-row-copy">Controls live sync polling across the workspace.</div>
+                    </div>
+                    <div className="pf-row-value">{preferences.autoRefresh === false ? 'Off' : 'On'}</div>
                   </div>
                 </>
               ) : (
@@ -498,48 +548,59 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                     />
                   </div>
 
-                  <div className="pf-field">
-                    <label className="pf-label">Full name</label>
-                    <input
-                      className="pf-input"
-                      value={form.name}
-                      onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-                    />
+                  <div className="pf-two-up">
+                    <div className="pf-field">
+                      <label className="pf-label">Full name</label>
+                      <input className="pf-input" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} />
+                    </div>
+                    <div className="pf-field">
+                      <label className="pf-label">Phone number</label>
+                      <input className="pf-input" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, '').slice(0, 10) }))} />
+                    </div>
                   </div>
 
-                  <div className="pf-field">
-                    <label className="pf-label">Phone number</label>
-                    <input
-                      className="pf-input"
-                      value={form.phone}
-                      onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value.replace(/\D/g, '').slice(0, 10) }))}
-                    />
+                  <div className="pf-two-up">
+                    <div className="pf-field">
+                      <label className="pf-label">Platform</label>
+                      <select className="pf-select" value={form.platform} onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))}>
+                        {PLATFORMS.map((platform) => <option key={platform} value={platform}>{platform}</option>)}
+                      </select>
+                    </div>
+                    <div className="pf-field">
+                      <label className="pf-label">Zone</label>
+                      <select className="pf-select" value={form.zone} onChange={(event) => setForm((prev) => ({ ...prev, zone: event.target.value }))}>
+                        {ZONES.map((zone) => <option key={zone.value} value={zone.value}>{zone.label}</option>)}
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="pf-field">
-                    <label className="pf-label">Platform</label>
-                    <select
-                      className="pf-select"
-                      value={form.platform}
-                      onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))}
-                    >
-                      {PLATFORMS.map((platform) => (
-                        <option key={platform} value={platform}>{platform}</option>
-                      ))}
-                    </select>
+                  <div className="pf-two-up">
+                    <div className="pf-field">
+                      <label className="pf-label">Emergency contact</label>
+                      <input className="pf-input" value={form.emergencyContact} onChange={(event) => setForm((prev) => ({ ...prev, emergencyContact: event.target.value.replace(/\D/g, '').slice(0, 10) }))} placeholder="10-digit number" />
+                    </div>
+                    <div className="pf-field">
+                      <label className="pf-label">Payout method</label>
+                      <select className="pf-select" value={form.payoutMethod} onChange={(event) => setForm((prev) => ({ ...prev, payoutMethod: event.target.value }))}>
+                        {PAYOUT_METHODS.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="pf-field">
-                    <label className="pf-label">Zone</label>
-                    <select
-                      className="pf-select"
-                      value={form.zone}
-                      onChange={(event) => setForm((prev) => ({ ...prev, zone: event.target.value }))}
-                    >
-                      {ZONES.map((zone) => (
-                        <option key={zone.value} value={zone.value}>{zone.label}</option>
-                      ))}
-                    </select>
+                  <div className="pf-two-up">
+                    <div className="pf-field">
+                      <label className="pf-label">Alerts mode</label>
+                      <select className="pf-select" value={form.notificationMode} onChange={(event) => setForm((prev) => ({ ...prev, notificationMode: event.target.value }))}>
+                        {NOTIFICATION_MODES.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
+                      </select>
+                    </div>
+                    <div className="pf-field">
+                      <label className="pf-label">Auto refresh</label>
+                      <select className="pf-select" value={form.autoRefresh ? 'on' : 'off'} onChange={(event) => setForm((prev) => ({ ...prev, autoRefresh: event.target.value === 'on' }))}>
+                        <option value="on">On</option>
+                        <option value="off">Off</option>
+                      </select>
+                    </div>
                   </div>
 
                   {error && <div className="pf-error">{error}</div>}
@@ -554,21 +615,28 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
 
             <div className="pf-stack">
               <div className="pf-card">
-                <div className="pf-kicker">New feature</div>
-                <div className="pf-card-title">Safety and support</div>
+                <div className="pf-kicker">Features</div>
+                <div className="pf-card-title">Operations preferences</div>
                 <div className="pf-row">
                   <div>
-                    <div className="pf-row-title">Support contact</div>
-                    <div className="pf-row-copy">Quick access when claims or location sync look off.</div>
+                    <div className="pf-row-title">Payout setup</div>
+                    <div className="pf-row-copy">Selected destination for future payout handling in the product flow.</div>
                   </div>
-                  <div className="pf-row-value">support@gigshield.ai</div>
+                  <div className="pf-row-value">{operations.payoutMethod || 'UPI'}</div>
                 </div>
                 <div className="pf-row">
                   <div>
-                    <div className="pf-row-title">Monitoring region</div>
-                    <div className="pf-row-copy">Claims depend on this zone staying accurate.</div>
+                    <div className="pf-row-title">Alert filtering</div>
+                    <div className="pf-row-copy">Controls whether you see all updates or only the important ones.</div>
                   </div>
-                  <div className="pf-row-value">{zoneName}</div>
+                  <div className="pf-row-value">{preferences.notificationMode || 'all'}</div>
+                </div>
+                <div className="pf-row">
+                  <div>
+                    <div className="pf-row-title">Refresh control</div>
+                    <div className="pf-row-copy">Turning this off pauses recurring workspace sync checks.</div>
+                  </div>
+                  <div className="pf-row-value">{preferences.autoRefresh === false ? 'Paused' : 'Live'}</div>
                 </div>
               </div>
 
@@ -577,7 +645,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                 <div className="pf-card-title">Workspace controls</div>
                 <div className="pf-actions">
                   <button className="pf-btn-primary" onClick={() => setIsEditing(true)}>
-                    {isEditing ? 'Editing active' : 'Edit profile'}
+                    {isEditing ? 'Editing active' : 'Edit settings'}
                   </button>
                   <button className="pf-btn" onClick={onOpenPolicy}>Open policy studio</button>
                   <button className="pf-btn" onClick={() => setHelpOpen(true)}>Help and support</button>
@@ -595,12 +663,12 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
             <div className="pf-kicker">Support</div>
             <div className="pf-help-title">Quick checks before raising a ticket</div>
             <p className="pf-help-text">
-              These are the three most common causes of confusing payout behavior in the demo environment.
+              These are the most common causes of confusing payout behavior in the demo environment.
             </p>
             <ul className="pf-help-list">
               <li className="pf-help-item">Make sure the backend and AI engine are both running before you test disruptions.</li>
               <li className="pf-help-item">Keep your work zone updated so location-based claim triggers stay aligned.</li>
-              <li className="pf-help-item">If a payout looks delayed, refresh the claims screen after the next polling cycle.</li>
+              <li className="pf-help-item">If auto refresh is turned off, use manual sync in the top bar to refresh workspace status.</li>
             </ul>
             <div className="pf-actions" style={{ marginTop: 16 }}>
               <button className="pf-btn-primary" onClick={handleCopySupportEmail}>Copy support email</button>

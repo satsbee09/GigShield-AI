@@ -578,7 +578,7 @@ const css = `
   }
 `;
 
-export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
+export default function Dashboard({ worker, onBuyPolicy, onOpenClaims, autoRefreshEnabled = true, refreshKey = 0, onSync }) {
   const [policy, setPolicy] = useState(null);
   const [claims, setClaims] = useState([]);
   const [wScore, setWScore] = useState(null);
@@ -603,17 +603,20 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
         );
         const workabilityData = await workabilityRes.json();
         setWScore(workabilityData.workabilityScore ?? 72);
+        onSync?.();
       } catch {
         setWScore(72);
+        onSync?.();
       } finally {
         setLoading(false);
       }
     }
 
     load();
+    if (!autoRefreshEnabled) return undefined;
     const timer = setInterval(load, 60000);
     return () => clearInterval(timer);
-  }, [worker?._id, worker?.zone, worker?.zoneLat, worker?.zoneLon]);
+  }, [autoRefreshEnabled, onSync, refreshKey, worker?._id, worker?.zone, worker?.zoneLat, worker?.zoneLon]);
 
   async function handleSimulate() {
     setSimming(true);

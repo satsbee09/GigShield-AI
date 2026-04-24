@@ -20,6 +20,11 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
+function formatTime(value) {
+  if (!value) return 'Not synced yet';
+  return new Date(value).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+}
+
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
 
@@ -61,7 +66,8 @@ const css = `
   .app-main,
   .app-topbar,
   .app-notif-panel,
-  .app-command {
+  .app-command,
+  .app-account-menu {
     position: relative;
     z-index: 1;
   }
@@ -332,7 +338,8 @@ const css = `
   }
 
   .app-chip-btn,
-  .app-icon-btn {
+  .app-icon-btn,
+  .app-account-trigger {
     border: 1px solid var(--line);
     background: var(--bg-elevated);
     color: var(--text);
@@ -344,6 +351,29 @@ const css = `
     padding: 10px 14px;
     font-size: 0.84rem;
     font-weight: 600;
+  }
+
+  .app-status-chip {
+    border-radius: 999px;
+    padding: 10px 13px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+  }
+
+  .app-status-chip strong {
+    color: var(--text);
+    margin-left: 4px;
+  }
+
+  .app-status-chip.live strong {
+    color: var(--success);
+  }
+
+  .app-status-chip.off strong {
+    color: var(--warning);
   }
 
   .app-icon-btn {
@@ -359,7 +389,8 @@ const css = `
 
   .app-chip-btn:hover,
   .app-icon-btn:hover,
-  .app-side-btn:hover {
+  .app-side-btn:hover,
+  .app-account-trigger:hover {
     border-color: var(--line-strong);
     transform: translateY(-1px);
   }
@@ -385,20 +416,147 @@ const css = `
     backdrop-filter: blur(16px);
   }
 
-  .app-notif-wrap {
+  .app-notif-wrap,
+  .app-account-wrap {
     position: relative;
   }
 
-  .app-notif-panel {
+  .app-notif-panel,
+  .app-account-menu {
     position: absolute;
     right: 0;
     top: calc(100% + 10px);
-    width: min(360px, calc(100vw - 48px));
     background: var(--bg-card-strong);
     border: 1px solid var(--line);
     border-radius: 22px;
     box-shadow: var(--shadow);
     overflow: hidden;
+  }
+
+  .app-notif-panel {
+    width: min(360px, calc(100vw - 48px));
+  }
+
+  .app-account-menu {
+    width: min(340px, calc(100vw - 48px));
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .app-account-trigger {
+    border-radius: 18px;
+    padding: 7px 10px 7px 7px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .app-account-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--accent) 22%, var(--bg-ink) 78%);
+    color: #fff6ee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-family: var(--font-display);
+    flex-shrink: 0;
+  }
+
+  .app-account-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .app-account-copy {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .app-account-name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-account-sub {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-account-head {
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .app-account-title {
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .app-account-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .app-account-stat {
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    padding: 12px;
+  }
+
+  .app-account-stat span {
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: 6px;
+  }
+
+  .app-account-stat strong {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: -0.03em;
+  }
+
+  .app-account-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .app-account-btn {
+    width: 100%;
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--text);
+    padding: 11px 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .app-account-btn.danger {
+    color: var(--danger);
   }
 
   .app-notif-head {
@@ -540,8 +698,14 @@ const css = `
       justify-content: flex-start;
     }
 
-    .app-signal-grid {
+    .app-signal-grid,
+    .app-account-grid {
       grid-template-columns: 1fr;
+    }
+
+    .app-account-trigger {
+      width: 100%;
+      justify-content: space-between;
     }
   }
 `;
@@ -559,10 +723,20 @@ export default function App() {
   const [notifications, setNotifications] = useState([]);
   const [readNotifIds, setReadNotifIds] = useState({});
   const [notifOpen, setNotifOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickQuery, setQuickQuery] = useState('');
+  const [lastSyncAt, setLastSyncAt] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const notifWrapRef = useRef(null);
+  const accountWrapRef = useRef(null);
   const quickInputRef = useRef(null);
+
+  const preferences = worker?.preferences || {};
+  const notificationMode = preferences.notificationMode || 'all';
+  const autoRefreshEnabled = preferences.autoRefresh !== false;
+  const workerImage = worker?.profileImage || '';
+  const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
 
   useEffect(() => {
     localStorage.setItem('gigshield_theme_mode', themeMode);
@@ -580,7 +754,6 @@ export default function App() {
 
   useEffect(() => {
     if (themeMode !== 'system' || typeof window === 'undefined' || !window.matchMedia) return undefined;
-
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const applySystemTheme = (event) => setTheme(event.matches ? 'dark' : 'light');
     setTheme(media.matches ? 'dark' : 'light');
@@ -637,17 +810,32 @@ export default function App() {
     });
   }
 
-  const tabs = [
+  const navTabs = [
     { id: 'dashboard', label: 'Overview', sub: 'Risk desk', icon: '◧' },
     { id: 'claims', label: 'Claims', sub: 'Payout history', icon: '◎' },
-    { id: 'profile', label: 'Profile', sub: 'Ops settings', icon: '◌' },
   ];
+
+  const tabMeta = {
+    dashboard: {
+      label: 'Overview',
+      description: 'Watch live disruption risk, policy health, and shift readiness.',
+    },
+    claims: {
+      label: 'Claims',
+      description: 'Track auto-generated claims, export records, and audit status.',
+    },
+    profile: {
+      label: 'Profile',
+      description: 'Manage identity, payout setup, alerts, and workspace preferences.',
+    },
+  };
 
   const quickActions = [
     { id: 'qa-home', label: 'Open dashboard', hint: 'Return to live risk overview', run: () => setTab('dashboard') },
     { id: 'qa-claims', label: 'Open claims', hint: 'Review payouts and status', run: () => setTab('claims') },
     { id: 'qa-profile', label: 'Open profile', hint: 'Manage account and preferences', run: () => setTab('profile') },
     { id: 'qa-policy', label: 'Open policy studio', hint: 'Compare cover and activate protection', run: () => setScreen('policy') },
+    { id: 'qa-sync', label: 'Manual sync', hint: 'Refresh live workspace data now', run: () => setRefreshKey((prev) => prev + 1) },
     { id: 'qa-theme', label: 'Change theme mode', hint: 'Cycle system, dark, and light', run: toggleTheme },
     { id: 'qa-logout', label: 'Sign out', hint: 'Clear the local session', run: onLogout },
   ];
@@ -656,15 +844,14 @@ export default function App() {
     action.label.toLowerCase().includes(quickQuery.trim().toLowerCase())
   );
 
-  const workerImage = worker?.profileImage || '';
-  const workerInitial = worker?.name?.[0]?.toUpperCase() || 'U';
-  const activeTab = tabs.find((item) => item.id === tab) || tabs[0];
+  const activeTab = tabMeta[tab] || tabMeta.dashboard;
   const unreadNotifications = notifications.filter((notification) => !readNotifIds[notification.id]);
-
   const shellSignals = useMemo(() => ([
     { key: 'Zone', value: worker?.zone?.replace(/_/g, ' ') || 'Unassigned' },
     { key: 'Risk tier', value: worker?.premiumTier || 'Pending' },
   ]), [worker]);
+
+  const payoutMethodLabel = worker?.operations?.payoutMethod || 'UPI';
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -673,7 +860,11 @@ export default function App() {
         event.preventDefault();
         setQuickOpen(true);
       }
-      if (event.key === 'Escape') setQuickOpen(false);
+      if (event.key === 'Escape') {
+        setQuickOpen(false);
+        setNotifOpen(false);
+        setAccountOpen(false);
+      }
     }
 
     document.addEventListener('keydown', onKeyDown);
@@ -744,12 +935,14 @@ export default function App() {
           id: `policy-${policy._id || 'active'}`,
           ts: Date.now(),
           text: `Coverage live in ${worker.zone?.replace(/_/g, ' ') || 'your zone'} until ${formatDate(policy.endDate)}.`,
+          level: 'info',
         });
         if ((policy.daysLeft ?? 0) <= 2) {
           items.push({
             id: `policy-renew-${policy._id || 'active'}`,
             ts: Date.now() - 1,
             text: `Renewal window is open. ${policy.daysLeft} day(s) left on your current cover.`,
+            level: 'critical',
           });
         }
       } else {
@@ -757,6 +950,7 @@ export default function App() {
           id: 'policy-missing',
           ts: Date.now(),
           text: 'No active policy detected. Open Policy Studio to restore protection.',
+          level: 'critical',
         });
       }
 
@@ -779,30 +973,38 @@ export default function App() {
             id: `${status}-${claim._id || index}`,
             ts: new Date(claim.createdAt || Date.now()).getTime(),
             text: copy,
+            level: status === 'rejected' ? 'critical' : 'info',
           });
         });
 
-      setNotifications(items.sort((a, b) => b.ts - a.ts).slice(0, 8));
+      const filteredItems = items.filter((item) => {
+        if (notificationMode === 'all') return true;
+        if (notificationMode === 'critical') return item.level === 'critical';
+        return item.level === 'critical' && item.id === 'policy-missing';
+      });
+
+      setNotifications(filteredItems.sort((a, b) => b.ts - a.ts).slice(0, 8));
+      setLastSyncAt(new Date().toISOString());
     }
 
     loadNotifications();
+    if (!autoRefreshEnabled) return () => { alive = false; };
     const timer = setInterval(loadNotifications, 60000);
-
     return () => {
       alive = false;
       clearInterval(timer);
     };
-  }, [worker?._id, worker?.zone]);
+  }, [autoRefreshEnabled, notificationMode, refreshKey, worker?._id, worker?.zone]);
 
   useEffect(() => {
     function handleOutside(event) {
-      if (!notifOpen) return;
-      if (notifWrapRef.current && !notifWrapRef.current.contains(event.target)) setNotifOpen(false);
+      if (notifOpen && notifWrapRef.current && !notifWrapRef.current.contains(event.target)) setNotifOpen(false);
+      if (accountOpen && accountWrapRef.current && !accountWrapRef.current.contains(event.target)) setAccountOpen(false);
     }
 
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
-  }, [notifOpen]);
+  }, [accountOpen, notifOpen]);
 
   function markAllNotificationsAsRead() {
     setReadNotifIds((prev) => {
@@ -862,7 +1064,7 @@ export default function App() {
         </div>
 
         <nav className="app-nav">
-          {tabs.map((item) => (
+          {navTabs.map((item) => (
             <button
               key={item.id}
               className={`app-nav-btn ${tab === item.id ? 'active' : ''}`}
@@ -892,20 +1094,26 @@ export default function App() {
           <div className="app-topbar-copy">
             <div className="app-topbar-label">Operations Workspace</div>
             <div className="app-topbar-title">{activeTab.label}</div>
-            <div className="app-topbar-sub">
-              {tab === 'dashboard' && 'Watch live disruption risk, policy health, and shift readiness.'}
-              {tab === 'claims' && 'Track auto-generated claims, export records, and audit status.'}
-              {tab === 'profile' && 'Manage identity, safety preferences, and support settings.'}
-            </div>
+            <div className="app-topbar-sub">{activeTab.description}</div>
           </div>
 
           <div className="app-toolbar">
+            <div className={`app-status-chip ${autoRefreshEnabled ? 'live' : 'off'}`}>
+              Auto refresh
+              <strong>{autoRefreshEnabled ? 'On' : 'Off'}</strong>
+            </div>
+            <div className="app-status-chip">
+              Last sync
+              <strong>{formatTime(lastSyncAt)}</strong>
+            </div>
+            <button className="app-chip-btn" onClick={() => setRefreshKey((prev) => prev + 1)}>Sync now</button>
             <button className="app-chip-btn" onClick={() => setQuickOpen(true)}>Quick actions</button>
             <button className="app-chip-btn" onClick={toggleTheme}>
               {themeMode === 'system' ? 'System mode' : themeMode === 'dark' ? 'Dark mode' : 'Light mode'}
             </button>
+
             <div className="app-notif-wrap" ref={notifWrapRef}>
-              <button className="app-icon-btn" aria-label="Notifications" onClick={() => setNotifOpen((v) => !v)}>
+              <button className="app-icon-btn" aria-label="Notifications" onClick={() => setNotifOpen((value) => !value)}>
                 ◔
                 {unreadNotifications.length > 0 && <span className="app-notif-dot" />}
               </button>
@@ -938,6 +1146,58 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            <div className="app-account-wrap" ref={accountWrapRef}>
+              <button className="app-account-trigger" onClick={() => setAccountOpen((value) => !value)}>
+                <span className="app-account-avatar">
+                  {workerImage ? <img src={workerImage} alt="Profile" /> : workerInitial}
+                </span>
+                <span className="app-account-copy">
+                  <span className="app-account-name">{worker?.name || 'Worker'}</span>
+                  <span className="app-account-sub">{payoutMethodLabel} payout • {notificationMode} alerts</span>
+                </span>
+              </button>
+
+              {accountOpen && (
+                <div className="app-account-menu">
+                  <div className="app-account-head">
+                    <span className="app-account-avatar">
+                      {workerImage ? <img src={workerImage} alt="Profile" /> : workerInitial}
+                    </span>
+                    <div>
+                      <div className="app-account-title">{worker?.name || 'Worker'}</div>
+                      <div className="app-account-sub">{worker?.platform || 'Platform'} • {worker?.zone?.replace(/_/g, ' ') || 'Unassigned'}</div>
+                    </div>
+                  </div>
+
+                  <div className="app-account-grid">
+                    <div className="app-account-stat">
+                      <span>Payout</span>
+                      <strong>{payoutMethodLabel}</strong>
+                    </div>
+                    <div className="app-account-stat">
+                      <span>Alerts</span>
+                      <strong>{notificationMode}</strong>
+                    </div>
+                  </div>
+
+                  <div className="app-account-actions">
+                    <button className="app-account-btn" onClick={() => { setTab('profile'); setAccountOpen(false); }}>
+                      Open profile settings
+                    </button>
+                    <button className="app-account-btn" onClick={() => { setScreen('policy'); setAccountOpen(false); }}>
+                      Open policy studio
+                    </button>
+                    <button className="app-account-btn" onClick={() => { setRefreshKey((prev) => prev + 1); setAccountOpen(false); }}>
+                      Run workspace sync
+                    </button>
+                    <button className="app-account-btn danger" onClick={onLogout}>
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -947,7 +1207,9 @@ export default function App() {
               worker={worker}
               onBuyPolicy={() => setScreen('policy')}
               onOpenClaims={() => setTab('claims')}
-              showHeader={false}
+              autoRefreshEnabled={autoRefreshEnabled}
+              refreshKey={refreshKey}
+              onSync={() => setLastSyncAt(new Date().toISOString())}
             />
           )}
 
