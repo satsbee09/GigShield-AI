@@ -206,26 +206,6 @@ const css = `
     text-align: center;
   }
 
-  .gs-platform-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .gs-chip {
-    border: 1px solid var(--line);
-    background: var(--bg-elevated);
-    color: var(--text-muted);
-    padding: 12px;
-    text-align: center;
-  }
-
-  .gs-chip.selected {
-    background: var(--bg-ink);
-    color: var(--text-inverse);
-    border-color: transparent;
-  }
-
   .gs-actions {
     display: flex;
     gap: 10px;
@@ -330,7 +310,6 @@ const css = `
       padding: 16px;
     }
 
-    .gs-platform-grid,
     .gs-preview-grid {
       grid-template-columns: 1fr;
     }
@@ -534,22 +513,20 @@ export default function Onboarding({ onComplete, language = 'en', onLanguageChan
                   </div>
 
                   <div className="gs-field">
-                    <label className="gs-label">Platform</label>
-                    <div className="gs-platform-grid">
-                      {[...PLATFORMS, OTHER_PLATFORM].map((platform) => (
-                        <button
-                          type="button"
-                          key={platform}
-                          className={`gs-chip ${form.platform === platform ? 'selected' : ''}`}
-                          onClick={() => {
-                            set('platform', platform);
-                            setError('');
-                          }}
-                        >
-                          {platform === OTHER_PLATFORM ? getText(language, 'onboarding.otherPlatform') : platform}
-                        </button>
+                    <label className="gs-label">{getText(language, 'profile.platform')}</label>
+                    <select
+                      className="gs-select"
+                      value={form.platform}
+                      onChange={(event) => {
+                        set('platform', event.target.value);
+                        setError('');
+                      }}
+                    >
+                      {PLATFORMS.map((platform) => (
+                        <option key={platform} value={platform}>{platform}</option>
                       ))}
-                    </div>
+                      <option value={OTHER_PLATFORM}>{getText(language, 'onboarding.otherPlatform')}</option>
+                    </select>
                   </div>
 
                   {form.platform === OTHER_PLATFORM && (
