@@ -12,6 +12,7 @@ const ZONES = [
 ];
 
 const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon', 'Flipkart', 'Blinkit', 'BigBasket', 'Myntra', 'Dunzo', 'Porter'];
+const OTHER_PLATFORM = '__other__';
 const ONBOARDING_DRAFT_KEY = 'gigshield_onboarding_draft';
 
 const css = `
@@ -365,6 +366,7 @@ export default function Onboarding({ onComplete, language = 'en', onLanguageChan
     demoOtp: '',
     name: '',
     platform: 'Zomato',
+    customPlatform: '',
     zone: 'laxmi_nagar',
     avgDailyIncome: 800,
   });
@@ -423,6 +425,10 @@ export default function Onboarding({ onComplete, language = 'en', onLanguageChan
       setError(getText(language, 'onboarding.numberValid'));
       return;
     }
+    if (form.platform === OTHER_PLATFORM && !form.customPlatform.trim()) {
+      setError(getText(language, 'onboarding.customPlatformValid'));
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -450,7 +456,7 @@ export default function Onboarding({ onComplete, language = 'en', onLanguageChan
         phone: form.phone,
         otp: form.otp,
         name: form.name || 'Worker',
-        platform: form.platform,
+        platform: form.platform === OTHER_PLATFORM ? form.customPlatform.trim() : form.platform,
         zone: form.zone,
         zoneLat: zone?.lat || 28.6273,
         zoneLon: zone?.lon || 77.2773,
@@ -530,18 +536,33 @@ export default function Onboarding({ onComplete, language = 'en', onLanguageChan
                   <div className="gs-field">
                     <label className="gs-label">Platform</label>
                     <div className="gs-platform-grid">
-                      {PLATFORMS.map((platform) => (
+                      {[...PLATFORMS, OTHER_PLATFORM].map((platform) => (
                         <button
                           type="button"
                           key={platform}
                           className={`gs-chip ${form.platform === platform ? 'selected' : ''}`}
-                          onClick={() => set('platform', platform)}
+                          onClick={() => {
+                            set('platform', platform);
+                            setError('');
+                          }}
                         >
-                          {platform}
+                          {platform === OTHER_PLATFORM ? getText(language, 'onboarding.otherPlatform') : platform}
                         </button>
                       ))}
                     </div>
                   </div>
+
+                  {form.platform === OTHER_PLATFORM && (
+                    <div className="gs-field">
+                      <label className="gs-label">{getText(language, 'onboarding.customPlatform')}</label>
+                      <input
+                        className="gs-input"
+                        placeholder={getText(language, 'onboarding.customPlatformHint')}
+                        value={form.customPlatform}
+                        onChange={(event) => set('customPlatform', event.target.value)}
+                      />
+                    </div>
+                  )}
 
                   {error && <div className="gs-error">{error}</div>}
 

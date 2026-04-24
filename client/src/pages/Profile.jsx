@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getText, LANGUAGES } from '../i18n';
 
 const PLATFORMS = ['Zomato', 'Swiggy', 'Zepto', 'Amazon', 'Flipkart', 'Blinkit', 'BigBasket', 'Myntra', 'Dunzo', 'Porter'];
+const OTHER_PLATFORM = '__other__';
 const ZONES = [
   { label: 'Laxmi Nagar', value: 'laxmi_nagar', lat: 28.6273, lon: 77.2773 },
   { label: 'Yamuna Bank', value: 'yamuna_bank', lat: 28.62, lon: 77.29 },
@@ -339,6 +340,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   const zoneName = worker?.zone?.replace(/_/g, ' ') || 'Not set';
   const preferences = worker?.preferences || {};
   const operations = worker?.operations || {};
+  const currentPlatformIsPreset = PLATFORMS.includes(worker?.platform || '');
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -347,7 +349,8 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
   const [form, setForm] = useState({
     name: worker?.name || '',
     phone: worker?.phone || '',
-    platform: worker?.platform || PLATFORMS[0],
+    platform: currentPlatformIsPreset ? (worker?.platform || PLATFORMS[0]) : OTHER_PLATFORM,
+    customPlatform: currentPlatformIsPreset ? '' : (worker?.platform || ''),
     zone: worker?.zone || ZONES[0].value,
     profileImage: worker?.profileImage || '',
     emergencyContact: operations.emergencyContact || '',
@@ -360,7 +363,8 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
     setForm({
       name: worker?.name || '',
       phone: worker?.phone || '',
-      platform: worker?.platform || PLATFORMS[0],
+      platform: PLATFORMS.includes(worker?.platform || '') ? (worker?.platform || PLATFORMS[0]) : OTHER_PLATFORM,
+      customPlatform: PLATFORMS.includes(worker?.platform || '') ? '' : (worker?.platform || ''),
       zone: worker?.zone || ZONES[0].value,
       profileImage: worker?.profileImage || '',
       emergencyContact: worker?.operations?.emergencyContact || '',
@@ -409,6 +413,10 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       setError(getText(language, 'profile.phoneValid'));
       return;
     }
+    if (form.platform === OTHER_PLATFORM && !form.customPlatform.trim()) {
+      setError(getText(language, 'profile.customPlatformValid'));
+      return;
+    }
 
     if (emergencyContact && !/^\d{10}$/.test(emergencyContact)) {
       setError(getText(language, 'profile.emergencyValid'));
@@ -421,7 +429,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
       ...worker,
       name,
       phone,
-      platform: form.platform,
+      platform: form.platform === OTHER_PLATFORM ? form.customPlatform.trim() : form.platform,
       zone: form.zone,
       zoneLat: selectedZone?.lat ?? worker?.zoneLat,
       zoneLon: selectedZone?.lon ?? worker?.zoneLon,
@@ -563,6 +571,7 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                       <label className="pf-label">{getText(language, 'profile.platform')}</label>
                       <select className="pf-select" value={form.platform} onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))}>
                         {PLATFORMS.map((platform) => <option key={platform} value={platform}>{platform}</option>)}
+                        <option value={OTHER_PLATFORM}>{getText(language, 'profile.otherPlatform')}</option>
                       </select>
                     </div>
                     <div className="pf-field">
@@ -572,6 +581,18 @@ export default function Profile({ worker, onLogout, onOpenPolicy, onUpdateProfil
                       </select>
                     </div>
                   </div>
+
+                  {form.platform === OTHER_PLATFORM && (
+                    <div className="pf-field">
+                      <label className="pf-label">{getText(language, 'profile.customPlatform')}</label>
+                      <input
+                        className="pf-input"
+                        placeholder={getText(language, 'profile.customPlatformHint')}
+                        value={form.customPlatform}
+                        onChange={(event) => setForm((prev) => ({ ...prev, customPlatform: event.target.value }))}
+                      />
+                    </div>
+                  )}
 
                   <div className="pf-two-up">
                     <div className="pf-field">

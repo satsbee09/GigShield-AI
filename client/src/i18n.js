@@ -280,6 +280,10 @@ const translations = {
       allUpdates: 'All updates',
       criticalOnly: 'Important only',
       mostlyMuted: 'Mostly muted',
+      otherPlatform: 'Other platform',
+      customPlatform: 'Custom platform name',
+      customPlatformHint: 'Type your company name',
+      customPlatformValid: 'Please enter your platform name.',
     },
     onboarding: {
       title1: 'Start with your phone number.',
@@ -319,6 +323,10 @@ const translations = {
       weekly: 'Weekly',
       numberValid: 'Enter a valid 10-digit number.',
       otpValid: 'Enter the 6-digit OTP.',
+      otherPlatform: 'Other',
+      customPlatform: 'Platform name',
+      customPlatformHint: 'Type your company name',
+      customPlatformValid: 'Please enter your platform name.',
     },
     common: {
       close: 'Close',
@@ -600,6 +608,10 @@ const translations = {
       allUpdates: 'सभी अपडेट',
       criticalOnly: 'सिर्फ ज़रूरी',
       mostlyMuted: 'कम अपडेट',
+      otherPlatform: 'अन्य प्लेटफॉर्म',
+      customPlatform: 'प्लेटफॉर्म का नाम',
+      customPlatformHint: 'कंपनी का नाम लिखें',
+      customPlatformValid: 'कृपया प्लेटफॉर्म का नाम लिखें।',
     },
     onboarding: {
       title1: 'फोन नंबर से शुरू करें।',
@@ -639,6 +651,10 @@ const translations = {
       weekly: 'साप्ताहिक',
       numberValid: 'सही 10 अंकों का नंबर डालें।',
       otpValid: '6 अंकों का OTP डालें।',
+      otherPlatform: 'अन्य',
+      customPlatform: 'प्लेटफॉर्म का नाम',
+      customPlatformHint: 'कंपनी का नाम लिखें',
+      customPlatformValid: 'कृपया प्लेटफॉर्म का नाम लिखें।',
     },
     common: {
       close: 'बंद करें',
