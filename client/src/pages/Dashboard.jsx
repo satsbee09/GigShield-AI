@@ -29,14 +29,28 @@ const css = `
 
   .db-stack {
     display: grid;
-    gap: 16px;
+    gap: 18px;
+  }
+
+  .db-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.72fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .db-main,
+  .db-side {
+    display: grid;
+    gap: 18px;
   }
 
   .db-hero,
   .db-panel,
   .db-list,
   .db-brief,
-  .db-checklist {
+  .db-checklist,
+  .db-side-card {
     background: var(--bg-card);
     border: 1px solid var(--line);
     border-radius: 24px;
@@ -44,10 +58,10 @@ const css = `
   }
 
   .db-hero {
-    padding: 22px;
+    padding: 24px;
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
-    gap: 16px;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 18px;
   }
 
   .db-kicker,
@@ -61,18 +75,18 @@ const css = `
 
   .db-title {
     font-family: var(--font-display);
-    font-size: clamp(1.9rem, 4vw, 3.3rem);
-    line-height: 0.96;
-    letter-spacing: -0.06em;
+    font-size: clamp(2.1rem, 4vw, 3.6rem);
+    line-height: 0.94;
+    letter-spacing: -0.065em;
     margin: 10px 0 12px;
-    max-width: 11ch;
+    max-width: 10ch;
   }
 
   .db-lead {
     color: var(--text-muted);
     max-width: 58ch;
-    line-height: 1.55;
-    margin-bottom: 18px;
+    line-height: 1.6;
+    margin-bottom: 20px;
   }
 
   .db-hero-actions {
@@ -112,6 +126,39 @@ const css = `
     font-weight: 700;
   }
 
+  .db-hero-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .db-meta-card {
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    padding: 14px;
+    min-height: 112px;
+  }
+
+  .db-meta-value {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    letter-spacing: -0.05em;
+    margin: 8px 0 4px;
+  }
+
+  .db-meta-copy,
+  .db-stat-meta,
+  .db-policy-meta,
+  .db-brief-copy,
+  .db-check-copy,
+  .db-side-copy {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
   .db-risk-card {
     border-radius: 22px;
     background: var(--bg-ink);
@@ -119,6 +166,8 @@ const css = `
     padding: 18px;
     display: grid;
     gap: 14px;
+    min-height: 100%;
+    align-content: start;
   }
 
   .db-risk-top {
@@ -130,8 +179,8 @@ const css = `
 
   .db-risk-score {
     font-family: var(--font-display);
-    font-size: 3rem;
-    line-height: 0.95;
+    font-size: 3.2rem;
+    line-height: 0.92;
   }
 
   .db-risk-score span {
@@ -147,6 +196,7 @@ const css = `
     letter-spacing: 0.08em;
     text-transform: uppercase;
     border: 1px solid transparent;
+    white-space: nowrap;
   }
 
   .db-tone-pill.success {
@@ -193,21 +243,38 @@ const css = `
     background: linear-gradient(90deg, #ea8058 0%, #f3d26a 50%, #63ca99 100%);
   }
 
-  .db-grid {
+  .db-risk-notes {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-    gap: 16px;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .db-risk-note {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(248, 244, 237, 0.74);
+    font-size: 0.84rem;
+  }
+
+  .db-risk-note strong {
+    color: #fff;
+    font-weight: 700;
   }
 
   .db-panel,
   .db-list,
   .db-brief,
-  .db-checklist {
+  .db-checklist,
+  .db-side-card {
     padding: 18px;
   }
 
   .db-panel-head,
-  .db-list-head {
+  .db-list-head,
+  .db-side-head {
     display: flex;
     justify-content: space-between;
     gap: 12px;
@@ -216,7 +283,8 @@ const css = `
   }
 
   .db-panel-title,
-  .db-list-title {
+  .db-list-title,
+  .db-side-title {
     font-family: var(--font-display);
     font-size: 1.2rem;
     margin-top: 6px;
@@ -243,20 +311,19 @@ const css = `
     padding: 14px;
   }
 
+  .db-stat-card,
+  .db-policy-card {
+    min-height: 148px;
+    display: grid;
+    align-content: start;
+  }
+
   .db-stat-value,
   .db-policy-value {
     font-family: var(--font-display);
     font-size: 1.5rem;
     letter-spacing: -0.05em;
     margin: 8px 0 4px;
-  }
-
-  .db-stat-meta,
-  .db-policy-meta,
-  .db-brief-copy {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1.45;
   }
 
   .db-policy-empty {
@@ -287,7 +354,7 @@ const css = `
     border: 1px solid var(--line);
     border-radius: 18px;
     background: var(--bg-elevated);
-    padding: 14px;
+    padding: 14px 16px;
     display: flex;
     justify-content: space-between;
     gap: 12px;
@@ -307,6 +374,9 @@ const css = `
 
   .db-claim-right {
     text-align: right;
+    display: grid;
+    gap: 8px;
+    justify-items: end;
   }
 
   .db-claim-amount {
@@ -372,10 +442,38 @@ const css = `
     margin-bottom: 4px;
   }
 
-  .db-check-copy {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1.45;
+  .db-side-card {
+    display: grid;
+    gap: 12px;
+  }
+
+  .db-side-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .db-side-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .db-side-row:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .db-side-label {
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .db-side-value {
+    text-align: right;
+    font-weight: 700;
   }
 
   .db-loading {
@@ -447,31 +545,35 @@ const css = `
     font-size: 1.2rem;
   }
 
-  @media (max-width: 920px) {
-    .db-hero,
-    .db-grid {
+  @media (max-width: 1080px) {
+    .db-shell,
+    .db-hero {
       grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 720px) {
     .db-screen {
       padding: 16px;
     }
 
+    .db-hero-meta,
     .db-policy-grid,
     .db-stats-grid,
     .db-modal-grid {
       grid-template-columns: 1fr;
     }
 
-    .db-claim-row {
+    .db-claim-row,
+    .db-side-row {
       flex-direction: column;
       align-items: flex-start;
     }
 
-    .db-claim-right {
+    .db-claim-right,
+    .db-side-value {
       text-align: left;
+      justify-items: start;
     }
   }
 `;
@@ -545,9 +647,9 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
   const totalPaid = paidClaims.reduce((sum, claim) => sum + (claim.payoutAmount || 0), 0);
   const recentClaims = claims.slice(0, 4);
   const scoreTone = getStatusTone(wScore ?? 72);
+  const zoneName = worker?.zone?.replace(/_/g, ' ') || 'your zone';
 
   const readinessItems = useMemo(() => {
-    const zoneName = worker?.zone?.replace(/_/g, ' ') || 'your zone';
     return [
       {
         title: 'Policy status',
@@ -562,7 +664,7 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
         copy: (wScore ?? 72) < 60 ? 'Keep routes short and avoid low-visibility corridors this evening.' : 'Current conditions support a normal shift with routine caution.',
       },
     ];
-  }, [pendingClaims.length, policy, wScore, worker?.zone]);
+  }, [pendingClaims.length, policy, wScore, zoneName]);
 
   if (loading) {
     return (
@@ -581,10 +683,11 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
           <section className="db-hero">
             <div>
               <div className="db-kicker">Live desk</div>
-              <h1 className="db-title">Cover that feels like part of the shift.</h1>
+              <h1 className="db-title">A cleaner command view for your shift.</h1>
               <p className="db-lead">
-                GigShield watches zone conditions, keeps your policy status visible, and helps you decide whether to stay on the road or scale back before things get messy.
+                GigShield keeps the important things in one place: how risky the zone feels right now, whether your cover is active, and what claims are moving through the pipeline.
               </p>
+
               <div className="db-hero-actions">
                 <button className="db-btn" onClick={policy ? onOpenClaims : onBuyPolicy}>
                   {policy ? 'Review claim activity' : 'Activate cover'}
@@ -592,6 +695,24 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
                 <button className="db-outline-btn" onClick={handleSimulate} disabled={simming}>
                   {simming ? 'Running test…' : 'Run disruption simulation'}
                 </button>
+              </div>
+
+              <div className="db-hero-meta">
+                <div className="db-meta-card">
+                  <div className="db-card-kicker">Zone</div>
+                  <div className="db-meta-value" style={{ fontSize: '1.2rem' }}>{zoneName}</div>
+                  <div className="db-meta-copy">Live monitoring region tied to pricing and claims.</div>
+                </div>
+                <div className="db-meta-card">
+                  <div className="db-card-kicker">Risk tier</div>
+                  <div className="db-meta-value">{worker?.premiumTier || 'Pending'}</div>
+                  <div className="db-meta-copy">Current tier assigned to your profile.</div>
+                </div>
+                <div className="db-meta-card">
+                  <div className="db-card-kicker">Claims in review</div>
+                  <div className="db-meta-value">{pendingClaims.length}</div>
+                  <div className="db-meta-copy">Open cases still being verified.</div>
+                </div>
               </div>
             </div>
 
@@ -601,139 +722,158 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
                   <div className="db-card-kicker">Workability index</div>
                   <div className="db-risk-score">{wScore ?? 72}<span>/100</span></div>
                 </div>
-                <span className={`db-tone-pill ${scoreTone}`}>{scoreTone === 'success' ? 'Stable' : scoreTone === 'warning' ? 'Watch' : 'Critical'}</span>
-              </div>
-              <div className="db-risk-bar">
-                <div className="db-risk-fill" style={{ width: `${wScore ?? 72}%` }} />
-              </div>
-              <div className="db-risk-text">{getScoreMessage(wScore ?? 72)}</div>
-            </div>
-          </section>
-
-          <section className="db-grid">
-            <div className="db-panel">
-              <div className="db-panel-head">
-                <div>
-                  <div className="db-section-kicker">Coverage status</div>
-                  <div className="db-panel-title">Policy snapshot</div>
-                </div>
-                <span className={`db-tone-pill ${policy ? 'success' : 'warning'}`}>
-                  {policy ? 'Active' : 'Needs action'}
+                <span className={`db-tone-pill ${scoreTone}`}>
+                  {scoreTone === 'success' ? 'Stable' : scoreTone === 'warning' ? 'Watch' : 'Critical'}
                 </span>
               </div>
 
-              {policy ? (
-                <div className="db-policy-grid">
-                  <div className="db-policy-card">
-                    <div className="db-card-kicker">Weekly premium</div>
-                    <div className="db-policy-value">₹{policy.weeklyPremium}</div>
-                    <div className="db-policy-meta">Current billed amount for this protection cycle.</div>
-                  </div>
-                  <div className="db-policy-card">
-                    <div className="db-card-kicker">Daily cover</div>
-                    <div className="db-policy-value">₹{policy.coverageAmount}</div>
-                    <div className="db-policy-meta">Maximum payout available on disruption days.</div>
-                  </div>
-                  <div className="db-policy-card">
-                    <div className="db-card-kicker">Zone</div>
-                    <div className="db-policy-value" style={{ fontSize: '1.2rem' }}>{worker?.zone?.replace(/_/g, ' ')}</div>
-                    <div className="db-policy-meta">{policy.riskTier} risk tier with live monitoring enabled.</div>
-                  </div>
-                  <div className="db-policy-card">
-                    <div className="db-card-kicker">Renews / expires</div>
-                    <div className="db-policy-value">{policy.daysLeft}d</div>
-                    <div className="db-policy-meta">Coverage window ends on {new Date(policy.endDate).toLocaleDateString('en-IN')}.</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="db-policy-empty">
-                  <div className="db-section-kicker">No active protection</div>
-                  <h3>This shift cycle is uncovered.</h3>
-                  <p>Open Policy Studio to compare your cover and turn protection back on before the next disruption window.</p>
-                  <button className="db-btn" onClick={onBuyPolicy}>Open Policy Studio</button>
-                </div>
-              )}
-            </div>
-
-            <div className="db-panel">
-              <div className="db-panel-head">
-                <div>
-                  <div className="db-section-kicker">Numbers</div>
-                  <div className="db-panel-title">Protection metrics</div>
-                </div>
+              <div className="db-risk-bar">
+                <div className="db-risk-fill" style={{ width: `${wScore ?? 72}%` }} />
               </div>
 
-              <div className="db-stats-grid">
-                <div className="db-stat-card">
-                  <div className="db-card-kicker">Paid out</div>
-                  <div className="db-stat-value">₹{totalPaid.toLocaleString('en-IN')}</div>
-                  <div className="db-stat-meta">Claims received this cycle.</div>
+              <div className="db-risk-text">{getScoreMessage(wScore ?? 72)}</div>
+
+              <div className="db-risk-notes">
+                <div className="db-risk-note">
+                  <span>Zone watch</span>
+                  <strong>{zoneName}</strong>
                 </div>
-                <div className="db-stat-card">
-                  <div className="db-card-kicker">Claims paid</div>
-                  <div className="db-stat-value">{paidClaims.length}</div>
-                  <div className="db-stat-meta">Completed automatic payouts.</div>
+                <div className="db-risk-note">
+                  <span>Coverage</span>
+                  <strong>{policy ? 'Active now' : 'Inactive'}</strong>
                 </div>
-                <div className="db-stat-card">
-                  <div className="db-card-kicker">In review</div>
-                  <div className="db-stat-value">{pendingClaims.length}</div>
-                  <div className="db-stat-meta">Claim(s) still being verified.</div>
-                </div>
-                <div className="db-stat-card">
-                  <div className="db-card-kicker">Tier</div>
-                  <div className="db-stat-value" style={{ fontSize: '1.2rem' }}>{worker?.premiumTier || 'Pending'}</div>
-                  <div className="db-stat-meta">Risk tier linked to your home zone.</div>
+                <div className="db-risk-note">
+                  <span>Latest queue</span>
+                  <strong>{pendingClaims.length} open</strong>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="db-grid">
-            <div className="db-list">
-              <div className="db-list-head">
-                <div>
-                  <div className="db-section-kicker">Activity</div>
-                  <div className="db-list-title">Recent claim movement</div>
+          <div className="db-shell">
+            <div className="db-main">
+              <section className="db-panel">
+                <div className="db-panel-head">
+                  <div>
+                    <div className="db-section-kicker">Coverage status</div>
+                    <div className="db-panel-title">Policy snapshot</div>
+                  </div>
+                  <span className={`db-tone-pill ${policy ? 'success' : 'warning'}`}>
+                    {policy ? 'Active' : 'Needs action'}
+                  </span>
                 </div>
-                <button className="db-mini-btn" onClick={onOpenClaims}>See all claims</button>
-              </div>
 
-              <div className="db-list-body">
-                {recentClaims.length === 0 ? (
-                  <div className="db-policy-empty">
-                    <div className="db-section-kicker">Quiet cycle</div>
-                    <h3>No claims yet.</h3>
-                    <p>When a disruption crosses the threshold, the claim feed will appear here automatically.</p>
+                {policy ? (
+                  <div className="db-policy-grid">
+                    <div className="db-policy-card">
+                      <div className="db-card-kicker">Weekly premium</div>
+                      <div className="db-policy-value">₹{policy.weeklyPremium}</div>
+                      <div className="db-policy-meta">Current billed amount for this protection cycle.</div>
+                    </div>
+                    <div className="db-policy-card">
+                      <div className="db-card-kicker">Daily cover</div>
+                      <div className="db-policy-value">₹{policy.coverageAmount}</div>
+                      <div className="db-policy-meta">Maximum payout available on disruption days.</div>
+                    </div>
+                    <div className="db-policy-card">
+                      <div className="db-card-kicker">Zone</div>
+                      <div className="db-policy-value" style={{ fontSize: '1.2rem' }}>{zoneName}</div>
+                      <div className="db-policy-meta">{policy.riskTier} risk tier with live monitoring enabled.</div>
+                    </div>
+                    <div className="db-policy-card">
+                      <div className="db-card-kicker">Renews / expires</div>
+                      <div className="db-policy-value">{policy.daysLeft}d</div>
+                      <div className="db-policy-meta">Coverage window ends on {new Date(policy.endDate).toLocaleDateString('en-IN')}.</div>
+                    </div>
                   </div>
                 ) : (
-                  recentClaims.map((claim, index) => {
-                    const status = claim.status || 'processing';
-                    const tone = status === 'paid' ? 'success' : status === 'rejected' ? 'danger' : 'warning';
-                    return (
-                      <div className="db-claim-row" key={claim._id || index}>
-                        <div>
-                          <div className="db-claim-type">{(claim.triggerType || 'disruption').replace(/_/g, ' ')}</div>
-                          <div className="db-claim-meta">
-                            {new Date(claim.createdAt || Date.now()).toLocaleDateString('en-IN', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
+                  <div className="db-policy-empty">
+                    <div className="db-section-kicker">No active protection</div>
+                    <h3>This shift cycle is uncovered.</h3>
+                    <p>Open Policy Studio to compare your cover and turn protection back on before the next disruption window.</p>
+                    <button className="db-btn" onClick={onBuyPolicy}>Open Policy Studio</button>
+                  </div>
+                )}
+              </section>
+
+              <section className="db-list">
+                <div className="db-list-head">
+                  <div>
+                    <div className="db-section-kicker">Activity</div>
+                    <div className="db-list-title">Recent claim movement</div>
+                  </div>
+                  <button className="db-mini-btn" onClick={onOpenClaims}>See all claims</button>
+                </div>
+
+                <div className="db-list-body">
+                  {recentClaims.length === 0 ? (
+                    <div className="db-policy-empty">
+                      <div className="db-section-kicker">Quiet cycle</div>
+                      <h3>No claims yet.</h3>
+                      <p>When a disruption crosses the threshold, the claim feed will appear here automatically.</p>
+                    </div>
+                  ) : (
+                    recentClaims.map((claim, index) => {
+                      const status = claim.status || 'processing';
+                      const tone = status === 'paid' ? 'success' : status === 'rejected' ? 'danger' : 'warning';
+                      return (
+                        <div className="db-claim-row" key={claim._id || index}>
+                          <div>
+                            <div className="db-claim-type">{(claim.triggerType || 'disruption').replace(/_/g, ' ')}</div>
+                            <div className="db-claim-meta">
+                              {new Date(claim.createdAt || Date.now()).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </div>
+                          </div>
+                          <div className="db-claim-right">
+                            <div className="db-claim-amount">{status === 'paid' ? `+₹${claim.payoutAmount || 0}` : 'Under review'}</div>
+                            <span className={`db-tone-pill ${tone}`}>{status}</span>
                           </div>
                         </div>
-                        <div className="db-claim-right">
-                          <div className="db-claim-amount">{status === 'paid' ? `+₹${claim.payoutAmount || 0}` : 'Under review'}</div>
-                          <span className={`db-tone-pill ${tone}`}>{status}</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
             </div>
 
-            <div className="db-stack">
-              <div className="db-brief">
+            <aside className="db-side">
+              <section className="db-side-card">
+                <div className="db-side-head">
+                  <div>
+                    <div className="db-section-kicker">Numbers</div>
+                    <div className="db-side-title">Protection metrics</div>
+                  </div>
+                </div>
+
+                <div className="db-stats-grid">
+                  <div className="db-stat-card">
+                    <div className="db-card-kicker">Paid out</div>
+                    <div className="db-stat-value">₹{totalPaid.toLocaleString('en-IN')}</div>
+                    <div className="db-stat-meta">Claims received this cycle.</div>
+                  </div>
+                  <div className="db-stat-card">
+                    <div className="db-card-kicker">Claims paid</div>
+                    <div className="db-stat-value">{paidClaims.length}</div>
+                    <div className="db-stat-meta">Completed automatic payouts.</div>
+                  </div>
+                  <div className="db-stat-card">
+                    <div className="db-card-kicker">In review</div>
+                    <div className="db-stat-value">{pendingClaims.length}</div>
+                    <div className="db-stat-meta">Claim(s) still being verified.</div>
+                  </div>
+                  <div className="db-stat-card">
+                    <div className="db-card-kicker">Tier</div>
+                    <div className="db-stat-value" style={{ fontSize: '1.2rem' }}>{worker?.premiumTier || 'Pending'}</div>
+                    <div className="db-stat-meta">Risk tier linked to your home zone.</div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="db-brief">
                 <div className="db-section-kicker">Shift brief</div>
                 <div className="db-panel-title">Today’s signals</div>
                 <div className="db-brief-grid" style={{ marginTop: 14 }}>
@@ -747,9 +887,9 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              <div className="db-checklist">
+              <section className="db-checklist">
                 <div className="db-section-kicker">Readiness</div>
                 <div className="db-panel-title">Pre-shift checklist</div>
                 {readinessItems.map((item) => (
@@ -761,9 +901,42 @@ export default function Dashboard({ worker, onBuyPolicy, onOpenClaims }) {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </section>
+              </section>
+
+              <section className="db-side-card">
+                <div className="db-side-head">
+                  <div>
+                    <div className="db-section-kicker">New summary</div>
+                    <div className="db-side-title">Operations note</div>
+                  </div>
+                </div>
+
+                <div className="db-side-list">
+                  <div className="db-side-row">
+                    <div>
+                      <div className="db-side-label">Current zone</div>
+                      <div className="db-side-copy">Primary area tied to monitoring and claim automation.</div>
+                    </div>
+                    <div className="db-side-value">{zoneName}</div>
+                  </div>
+                  <div className="db-side-row">
+                    <div>
+                      <div className="db-side-label">Coverage posture</div>
+                      <div className="db-side-copy">Quick summary of whether this week is protected.</div>
+                    </div>
+                    <div className="db-side-value">{policy ? 'Protected' : 'Uncovered'}</div>
+                  </div>
+                  <div className="db-side-row">
+                    <div>
+                      <div className="db-side-label">Recommended action</div>
+                      <div className="db-side-copy">Simple next step based on live state.</div>
+                    </div>
+                    <div className="db-side-value">{policy ? 'Monitor queue' : 'Buy cover'}</div>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
         </div>
 
         {notice && (
