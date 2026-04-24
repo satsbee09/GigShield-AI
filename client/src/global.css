@@ -44,7 +44,7 @@ body.theme-dark {
   --text: #eef2f7;
   --text-muted: #a7b2c0;
   --text-faint: #788495;
-  --text-inverse: #151920;
+  --text-inverse: #f4efe8;
 
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.16);
