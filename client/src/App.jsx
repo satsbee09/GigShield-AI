@@ -7,6 +7,9 @@ import Profile from './pages/Profile';
 import { getText, LANGUAGES } from './i18n';
 import { getClaims, getPolicy } from './services/api';
 
+const WORKER_STORAGE_KEY = 'gigshield_worker';
+const WORKER_SESSION_DURATION_MS = 30 * 60 * 1000;
+
 function getSavedThemeMode() {
   const saved = localStorage.getItem('gigshield_theme_mode');
   return saved === 'system' || saved === 'light' || saved === 'dark' ? saved : null;
@@ -35,6 +38,61 @@ function getNotificationModeLabel(language, mode) {
   if (mode === 'critical') return getText(language, 'profile.criticalOnly');
   if (mode === 'muted') return getText(language, 'profile.mostlyMuted');
   return getText(language, 'profile.allUpdates');
+}
+
+function persistWorkerSession(worker) {
+  if (!worker) {
+    localStorage.removeItem(WORKER_STORAGE_KEY);
+    return;
+  }
+
+  localStorage.setItem(
+    WORKER_STORAGE_KEY,
+    JSON.stringify({
+      worker,
+      expiresAt: Date.now() + WORKER_SESSION_DURATION_MS,
+    })
+  );
+}
+
+function readWorkerSession() {
+  const raw = localStorage.getItem(WORKER_STORAGE_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw);
+    const session = parsed?.worker ? parsed : { worker: parsed, expiresAt: Date.now() + WORKER_SESSION_DURATION_MS };
+
+    if (!session.worker || (session.expiresAt && session.expiresAt <= Date.now())) {
+      localStorage.removeItem(WORKER_STORAGE_KEY);
+      return null;
+    }
+
+    return session;
+  } catch {
+    localStorage.removeItem(WORKER_STORAGE_KEY);
+    return null;
+  }
+}
+
+function BellIcon({ className = '' }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M15 18a3 3 0 0 1-6 0" />
+      <path d="M18 16H6c1.1-1.1 2-2.6 2-4.6V9a4 4 0 1 1 8 0v2.4c0 2 .9 3.5 2 4.6Z" />
+    </svg>
+  );
 }
 
 const css = `
@@ -407,6 +465,11 @@ const css = `
     font-size: 15px;
   }
 
+  .app-bell-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+
   .app-chip-btn:hover,
   .app-icon-btn:hover,
   .app-side-btn:hover,
@@ -588,6 +651,12 @@ const css = `
     font-weight: 700;
   }
 
+  .app-notif-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .app-notif-clear {
     border: none;
     background: transparent;
@@ -718,6 +787,15 @@ const css = `
       justify-content: flex-start;
     }
 
+    .app-notif-wrap {
+      order: -2;
+      margin-left: auto;
+    }
+
+    .app-account-wrap {
+      order: -1;
+    }
+
     .app-signal-grid,
     .app-account-grid {
       grid-template-columns: 1fr;
@@ -793,35 +871,53 @@ export default function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('gigshield_worker');
-    if (!saved) return;
-    const parsed = JSON.parse(saved);
-    setWorker(parsed);
+    const session = readWorkerSession();
+    if (!session) return;
+    setWorker(session.worker);
     setScreen('dashboard');
   }, []);
 
+  useEffect(() => {
+    if (!worker) return undefined;
+
+    const session = readWorkerSession();
+    if (!session?.expiresAt) return undefined;
+
+    const remaining = session.expiresAt - Date.now();
+    if (remaining <= 0) {
+      onLogout();
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      onLogout();
+    }, remaining);
+
+    return () => window.clearTimeout(timer);
+  }, [worker]);
+
   function onRegistered(nextWorker) {
-    localStorage.setItem('gigshield_worker', JSON.stringify(nextWorker));
+    persistWorkerSession(nextWorker);
     setWorker(nextWorker);
     setTab('dashboard');
     setScreen('policy');
   }
 
   function onPolicyPurchased(updatedWorker) {
-    localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
+    persistWorkerSession(updatedWorker);
     setWorker(updatedWorker);
     setTab('dashboard');
     setScreen('dashboard');
   }
 
   function onLogout() {
-    localStorage.removeItem('gigshield_worker');
+    localStorage.removeItem(WORKER_STORAGE_KEY);
     setWorker(null);
     setScreen('onboarding');
   }
 
   function onUpdateProfile(updatedWorker) {
-    localStorage.setItem('gigshield_worker', JSON.stringify(updatedWorker));
+    persistWorkerSession(updatedWorker);
     setWorker(updatedWorker);
   }
 
@@ -1147,14 +1243,17 @@ export default function App() {
 
             <div className="app-notif-wrap" ref={notifWrapRef}>
               <button className="app-icon-btn" aria-label="Notifications" onClick={() => setNotifOpen((value) => !value)}>
-                ◔
+                <BellIcon className="app-bell-icon" />
                 {unreadNotifications.length > 0 && <span className="app-notif-dot" />}
               </button>
 
               {notifOpen && (
                 <div className="app-notif-panel">
                   <div className="app-notif-head">
-                    <span>{getText(language, 'app.alerts')}</span>
+                    <span className="app-notif-title">
+                      <BellIcon className="app-bell-icon" />
+                      {getText(language, 'app.alerts')}
+                    </span>
                     {unreadNotifications.length > 0 && (
                       <button className="app-notif-clear" onClick={markAllNotificationsAsRead}>
                         {getText(language, 'app.markRead')}
