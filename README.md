@@ -2,6 +2,8 @@
 
 GigShield is AI-powered insurance for delivery workers. Auto-detects rain/pollution/heat via weather APIs, auto-files claims, instant payouts via Razorpay.
 
+live demo:- https://gigshield-ai-mzv9.onrender.com
+
 ## Tech Stack
 - Frontend: React + Vite
 - Backend: Node/Express + MongoDB Atlas
